@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# plattformio specific files
+.pio
+.clang_complete
+.gcc-flags.json
+.ccls
+
+# temporary files
+*.swp

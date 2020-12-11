@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # This is the list of steps this job will run.
+    steps:
+      # First of all, we clone the repo using the `checkout` action.
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+              fetch-depth: 1
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel platformio
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Build firmware (debug version)
+        run: pio run -e debug
+
+        #- name: Test Firmware
+        #  working-directory: Tonuino
+        #  run: pio run -t test -e native
+
+      - name: Build firmware (release version)
+        run: pio run -e release
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          # Artifact name
+          name: # optional
+          # Destination path
+          path: # optional
