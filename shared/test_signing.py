@@ -8,7 +8,7 @@
 from OpenSSL import crypto
 import os
 
-Import("env")
+Import("projenv")
 
 s = 1
 try:
@@ -29,5 +29,5 @@ if s:
     except:
         s = 0
 
-signing = "-DARDUINO_SIGNING=%d" % s
-env.Append(CPPFLAGS=[signing])
+signing = "-DSIGNED_UPDATES=%d" % s
+projenv.Append(CPPDEFINES = [signing])
