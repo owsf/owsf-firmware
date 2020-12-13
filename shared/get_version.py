@@ -12,7 +12,7 @@ import subprocess
 gitversion = subprocess.check_output(["git", "-C", env.subst("$SRC_DIR"),
                                    "describe", "--always",
                                    "--dirty"]).strip().decode()
-version = "VERSION='" + gitversion + "'"
+version = "-DVERSION='" + gitversion + "'"
 
 env.Append(CPPDEFINES = [version])
 
