@@ -9,7 +9,7 @@ import os
 
 Import("env", "projenv")
 
-default = "data/public.key"
+default = "misc/public.key"
 try:
     pubkey = os.environ["FIRMWARE_PUBLIC_KEY"]
 except:
