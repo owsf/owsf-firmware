@@ -1,18 +1,18 @@
+#!/usr/bin/python3
 #
 # (C) Copyright 2020 Tillmann Heidsieck
 #
 # SPDX-License-Identifier: MIT
 #
-
-Import("env")
-
 import re
 import subprocess
+
+Import("env")
 
 gitversion = subprocess.check_output(["git", "-C", env.subst("$SRC_DIR"),
                                    "describe", "--always",
                                    "--dirty"]).strip().decode()
-version = "-DVERSION='" + gitversion + "'"
+version = '-DVERSION=\'"' + gitversion + '"\''
 
 env.Append(CPPDEFINES = [version])
 
