@@ -39,3 +39,5 @@
 
 # temporary files
 *.swp
+
+data/certs.ar
