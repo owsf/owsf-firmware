@@ -41,3 +41,4 @@
 *.swp
 
 data/certs.ar
+data/config.js
