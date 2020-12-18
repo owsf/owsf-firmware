@@ -18,32 +18,28 @@
 
 class Updater {
 private:
-    BearSSL::PublicKey *signPubKey = nullptr;
-    BearSSL::HashSHA256 *hash;
-    BearSSL::SigningVerifier *sign;
-    BearSSL::CertStore *certStore;
+#if SIGNED_UPDATES
+    BearSSL::PublicKey sign_pubkey;
+    BearSSL::HashSHA256 hash;
+    BearSSL::SigningVerifier sign;
+#endif
+
+    BearSSL::CertStore *cert_store = nullptr;
 public:
     int run(std::string &remote_server, std::string &remote_file);
+    //void set_cert_store(BearSSL::CertStore *cert_store) { this->cert_store = cert_store; }
 
-    Updater(BearSSL::CertStore *certStore); 
+    explicit Updater(BearSSL::CertStore *);
     ~Updater();
 };
 
-Updater::Updater(BearSSL::CertStore *certStore) { 
-    this->certStore = certStore;
-
 #if SIGNED_UPDATES
-    this->signPubKey = new BearSSL::PublicKey(pubkey);
-    this->hash = new BearSSL::HashSHA256();
-    this->sign = new BearSSL::SigningVerifier(signPubKey);
+Updater::Updater(BearSSL::CertStore *cs) : sign_pubkey(pubkey), sign(&sign_pubkey), cert_store(cs) {}
+#else
+Updater::Updater(BearSSL::CertStore *cs) : cert_store(cs) {}
 #endif
-}
 
-Updater::~Updater() {
-    delete this->signPubKey;
-    delete this->hash;
-    delete this->sign;
-}
+Updater::~Updater() {}
 
 int Updater::run(std::string &remote_server, std::string &remote_file) {
     BearSSL::WiFiClientSecure client;
@@ -51,7 +47,7 @@ int Updater::run(std::string &remote_server, std::string &remote_file) {
     int r;
 
 #if SIGNED_UPDATES
-    Update.installSignature(this->hash, this->sign);
+    Update.installSignature(&this->hash, &this->sign);
 #endif
 
     ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
@@ -60,7 +56,7 @@ int Updater::run(std::string &remote_server, std::string &remote_file) {
     Serial.printf("MFLN supported: %s\n", mfln ? "yes" : "no");
     if (mfln)
         client.setBufferSizes(1024, 1024);
-    client.setCertStore(certStore);
+    client.setCertStore(cert_store);
 
     t_httpUpdate_return ret = ESPhttpUpdate.update(client, remote_server.c_str(), 443, remote_file.c_str());
 
