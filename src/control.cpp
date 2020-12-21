@@ -129,9 +129,17 @@ void FirmwareControl::setup() {
     wifi_pass = doc["wifi_pass"] | "NO PSK";
     ctrl_url  = doc["ctrl_url"]  | "https://example.com";
     sleep_time_s = doc["sleep_time_s"] | 60;
+
+    if (ESP.getResetReason() == "Power On")
+        go_online_request = true;
 }
 
 void FirmwareControl::loop() {
+    if (!online && go_online_request)
+        go_online();
+
+    if (online && ESP.getResetReason() == "Power On")
+        OTA();
 }
 
 FirmwareControl::FirmwareControl() : go_online_request(false), online(false), wcs(new BearSSL::WiFiClientSecure), wss(nullptr) {
