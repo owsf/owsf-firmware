@@ -15,8 +15,9 @@
 #include <time.h>
 
 #include "control.h"
+#include "rtcmem_map.h"
 #include "updater.h"
-#include <version.h>
+#include "version.h"
 
 void FirmwareControl::set_clock() {
     char buffer[64];
@@ -105,7 +106,7 @@ void FirmwareControl::setup() {
 
     LittleFS.begin();
 
-    wss = (WiFiState *)RTC_USER_MEM;
+    wss = (WiFiState *)RTCMEM_WSS;
 
     int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"), PSTR("/certs.ar"));
     Serial.print(F("Number of CA certs read: "));
