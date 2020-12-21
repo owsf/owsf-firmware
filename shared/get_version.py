@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: MIT
 #
+from datetime import datetime as date
 import re
 import subprocess
 
@@ -12,9 +13,13 @@ Import("env")
 gitversion = subprocess.check_output(["git", "-C", env.subst("$SRC_DIR"),
                                    "describe", "--always",
                                    "--dirty"]).strip().decode()
-version = '-DVERSION=\'"' + gitversion + '"\''
 
-env.Append(CPPDEFINES = [version])
+dstr = date.now().strftime("'\"%Y-%m-%d_%T\"'")
+
+vers = ("VERSION", "'\"" + gitversion + "\"'")
+bdate = ("DATE", dstr)
+
+env.Append(CPPDEFINES=[bdate, vers])
 
 if env.subst("PIOENV") == "release" :
     m = re.match(r"(.*?)(-g[0-9a-f]{7})?(-dirty)?$", gitversion)
