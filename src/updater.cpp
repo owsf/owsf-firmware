@@ -5,64 +5,28 @@
  *
  */
 #include <Arduino.h>
-
-#include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
-
-#include <ESP8266HTTPClient.h>
-#include <ESP8266httpUpdate.h>
-
-#include "pubkey.h"
-
 #include <string>
 
-class Updater {
-private:
-#if SIGNED_UPDATES
-    BearSSL::PublicKey sign_pubkey;
-    BearSSL::HashSHA256 hash;
-    BearSSL::SigningVerifier sign;
-#endif
+#include "pubkey.h"
+#include "updater.h"
 
-    BearSSL::CertStore *cert_store = nullptr;
-public:
-    int run(std::string &remote_server, std::string &remote_file);
-    //void set_cert_store(BearSSL::CertStore *cert_store) { this->cert_store = cert_store; }
-
-    explicit Updater(BearSSL::CertStore *);
-    ~Updater();
-};
-
-#if SIGNED_UPDATES
-Updater::Updater(BearSSL::CertStore *cs) : sign_pubkey(pubkey), sign(&sign_pubkey), cert_store(cs) {}
-#else
-Updater::Updater(BearSSL::CertStore *cs) : cert_store(cs) {}
-#endif
-
-Updater::~Updater() {}
-
-int Updater::run(std::string &remote_server, std::string &remote_file) {
-    BearSSL::WiFiClientSecure client;
-    bool mfln;
+int Updater::update(HTTPClient &http, const char *update_url) {
     int r;
 
 #if SIGNED_UPDATES
-    Update.installSignature(&this->hash, &this->sign);
+    installSignature(&this->hash, &this->sign);
+    Serial.println(F("Installed signature for update verification"));
 #endif
 
-    ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+    this->setLedPin(LED_BUILTIN, LOW);
 
-    mfln = client.probeMaxFragmentLength(remote_server.c_str(), 443, 1024);
-    Serial.printf("MFLN supported: %s\n", mfln ? "yes" : "no");
-    if (mfln)
-        client.setBufferSizes(1024, 1024);
-    client.setCertStore(cert_store);
-
-    t_httpUpdate_return ret = ESPhttpUpdate.update(client, remote_server.c_str(), 443, remote_file.c_str());
+    http.setURL(update_url);
+    auto ret = this->handleUpdate(http, VERSION, false);
 
     switch (ret) {
     case HTTP_UPDATE_FAILED:
-        Serial.printf("HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+        Serial.printf("HTTP_UPDATE_FAILED Error (%d): %s\n",
+                      getLastError(), getLastErrorString().c_str());
         r = -1;
         break;
 
