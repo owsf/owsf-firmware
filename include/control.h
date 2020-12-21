@@ -16,6 +16,7 @@ private:
 
     String ctrl_url;
     String update_url;
+    uint32_t sleep_time_s;
 
     BearSSL::CertStore cert_store;
 
