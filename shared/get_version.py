@@ -11,8 +11,8 @@ import subprocess
 Import("env")
 
 gitversion = subprocess.check_output(["git", "-C", env.subst("$SRC_DIR"),
-                                   "describe", "--always",
-                                   "--dirty"]).strip().decode()
+                                      "describe", "--always", "--dirty"],
+                                     shell=False).strip().decode()
 
 dstr = date.now().strftime("'\"%Y-%m-%d_%T\"'")
 
