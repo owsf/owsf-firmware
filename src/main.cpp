@@ -18,10 +18,10 @@
 
 BearSSL::CertStore cert_store;
 
-static char *wifi_ssid;
-static char *wifi_pass;
-static char *ctrl_url;
-static char *update_url;
+String wifi_ssid;
+String wifi_pass;
+String ctrl_url;
+String update_url;
 
 void setClock() {
     char buffer[64];
@@ -68,9 +68,9 @@ void setup() {
     }
     file.close();
 
-    wifi_ssid = strdup(doc["wifi_ssid"] | "NO SSID");
-    wifi_pass = strdup(doc["wifi_pass"] | "NO PSK");
-    ctrl_url  = strdup(doc["ctrl_url"] | "https://example.com");
+    wifi_ssid = doc["wifi_ssid"] | "NO SSID";
+    wifi_pass = doc["wifi_pass"] | "NO PSK";
+    ctrl_url  = (doc["ctrl_url"] | "https://example.com");
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid, wifi_pass);
@@ -89,7 +89,10 @@ void loop() {
             wcs->setCertStore(&cert_store);
 
             StaticJsonDocument<1024> doc;
-            bool mfln = wcs->probeMaxFragmentLength(remote_server, 443, 512);
+            String server = ctrl_url;
+            server.remove(0, server.indexOf(":") + 3);
+            server.remove(server.indexOf("/"));
+            bool mfln = wcs->probeMaxFragmentLength(server, 443, 512);
             if (mfln)
                 wcs->setBufferSizes(512, 512);
             else
@@ -102,18 +105,15 @@ void loop() {
                     if (http_code == HTTP_CODE_OK) {
                         String payload = https.getString();
                         DeserializationError error = deserializeJson(doc, payload.c_str());
-                        if (error != DeserializationError::Ok) {
+                        if (error != DeserializationError::Ok)
                             Serial.println(F("Could not load config file"));
-                        }
-                        if (!doc["firmware_update"].isNull()) {
-                            update_url = strdup(doc["firmware_update"]);
-                        }
+                        update_url = doc["firmware_update"] | "";
                     }
                 }
             }
             https.end();
 
-            if (update_url) {
+            if (!update_url.length()) {
                 Updater upd;
                 upd.update(https, update_url);
             }

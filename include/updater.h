@@ -19,7 +19,7 @@ private:
 #endif
 
 public:
-    int update(HTTPClient &http, const char *uu);
+    int update(HTTPClient &, String &);
 
     Updater() {};
     ~Updater() {};
