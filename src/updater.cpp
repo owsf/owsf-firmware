@@ -20,6 +20,7 @@ int Updater::update(HTTPClient &http, String &update_url) {
     http.setURL(update_url);
     auto ret = this->handleUpdate(http, VERSION, false);
 
+    int r;
     switch (ret) {
     case HTTP_UPDATE_FAILED:
         Serial.printf("HTTP_UPDATE_FAILED Error (%d): %s\n",
