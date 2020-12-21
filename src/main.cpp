@@ -20,8 +20,7 @@ BearSSL::CertStore cert_store;
 
 static char *wifi_ssid;
 static char *wifi_pass;
-static char *remote_server;
-
+static char *ctrl_url;
 static char *update_url;
 
 void setClock() {
@@ -71,18 +70,16 @@ void setup() {
 
     wifi_ssid = strdup(doc["wifi_ssid"] | "NO SSID");
     wifi_pass = strdup(doc["wifi_pass"] | "NO PSK");
-    remote_server = strdup(doc["remote_server"] | "example.com");
+    ctrl_url  = strdup(doc["ctrl_url"] | "https://example.com");
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid, wifi_pass);
 }
 
 void loop() {
-    static char c;
-    static int i = 0;
-
     /* work around problems of WiFi status not always showing WL_CONNECTED */
     if ((WiFi.status() == WL_CONNECTED) || WiFi.localIP().isSet()) {
+        static char c;
         if (!c)
             setClock();
         c = 1;
@@ -99,7 +96,7 @@ void loop() {
                 wcs->setBufferSizes(16384, 512);
 
             HTTPClient https;
-            if (https.begin(*wcs, remote_server, 443, "/esp8266.json", true)) {
+            if (https.begin(*wcs, ctrl_url)) {
                 int http_code = https.GET();
                 if (http_code > 0) {
                     if (http_code == HTTP_CODE_OK) {
