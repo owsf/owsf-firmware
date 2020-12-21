@@ -36,5 +36,5 @@ void setup() {
 
 void loop() {
     ctrl.loop();
-    delay(500);
+    delay(100);
 }
