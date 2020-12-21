@@ -7,14 +7,11 @@
 #include <Arduino.h>
 #include <string>
 
-#include "pubkey.h"
 #include "updater.h"
 
 int Updater::update(HTTPClient &http, String &update_url) {
-    int r;
-
 #if SIGNED_UPDATES
-    installSignature(&this->hash, &this->sign);
+    Update.installSignature(&this->hash, &this->sign);
     Serial.println(F("Installed signature for update verification"));
 #endif
 
