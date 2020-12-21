@@ -17,7 +17,7 @@
 #include "control.h"
 #include "updater.h"
 
-void set_clock() {
+void FirmwareControl::set_clock() {
     char buffer[64];
 
     configTime(0, 0, "pool.ntp.org", "time.nist.gov");
