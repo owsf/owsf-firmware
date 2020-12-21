@@ -69,7 +69,7 @@ void FirmwareControl::deep_sleep() {
     if (online)
         WiFi.mode(WIFI_SHUTDOWN, wss);
 
-    ESP.deepSleepInstant(10E6, WAKE_RF_DISABLED);
+    ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
 }
 
 void FirmwareControl::query_ctrl() {
@@ -122,6 +122,7 @@ void FirmwareControl::setup() {
     wifi_ssid = doc["wifi_ssid"] | "NO SSID";
     wifi_pass = doc["wifi_pass"] | "NO PSK";
     ctrl_url  = doc["ctrl_url"]  | "https://example.com";
+    sleep_time_s = doc["sleep_time_s"] | 60;
 }
 
 void FirmwareControl::loop() {
