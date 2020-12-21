@@ -10,7 +10,7 @@
 #include "pubkey.h"
 #include "updater.h"
 
-int Updater::update(HTTPClient &http, const char *update_url) {
+int Updater::update(HTTPClient &http, String &update_url) {
     int r;
 
 #if SIGNED_UPDATES
