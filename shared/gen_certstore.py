@@ -35,14 +35,14 @@ for p in pems:
 
     cert = "data/ca_%03d.der" % (idx)
     cmd = ['openssl', 'x509', '-inform', 'PEM', '-in', found, '-outform', 'DER', '-out', cert]
-    subprocess.run(" ".join(cmd), shell=True)
+    subprocess.check_output(cmd, shell=False)
 
     if os.path.exists(cert):
         certs.append(cert)
         idx = idx + 1
 
 os.unlink('data/certs.ar')
-subprocess.run(['ar', 'q', 'data/certs.ar'] + certs)
+subprocess.run(['ar', 'q', 'data/certs.ar'] + certs, shell=False)
 
 # cleanup temporary files
 for cert in certs:
