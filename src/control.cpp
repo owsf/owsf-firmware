@@ -16,6 +16,7 @@
 
 #include "control.h"
 #include "updater.h"
+#include <version.h>
 
 void FirmwareControl::set_clock() {
     char buffer[64];
@@ -44,7 +45,7 @@ void FirmwareControl::OTA() {
         return;
 
     Updater upd;
-    upd.update(https, update_url);
+    upd.update(https, update_url, VERSION);
 }
 
 void FirmwareControl::go_online() {
@@ -100,6 +101,8 @@ void FirmwareControl::query_ctrl() {
 }
 
 void FirmwareControl::setup() {
+    Serial.printf("ESP8266 Firmware Version %s (%s)\n", VERSION, BUILD_DATE);
+
     LittleFS.begin();
 
     wss = (WiFiState *)RTC_USER_MEM;

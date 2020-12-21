@@ -26,7 +26,7 @@ private:
 #endif
 
 public:
-    int update(HTTPClient &, String &);
+    int update(HTTPClient &, String &, const char *);
 
 #if SIGNED_UPDATES
     Updater() : sign_pubkey(pubkey), sign(&sign_pubkey) {}

@@ -9,7 +9,7 @@
 
 #include "updater.h"
 
-int Updater::update(HTTPClient &http, String &update_url) {
+int Updater::update(HTTPClient &http, String &update_url, const char *version) {
 #if SIGNED_UPDATES
     Update.installSignature(&this->hash, &this->sign);
     Serial.println(F("Installed signature for update verification"));
@@ -18,7 +18,7 @@ int Updater::update(HTTPClient &http, String &update_url) {
     this->setLedPin(LED_BUILTIN, LOW);
 
     http.setURL(update_url);
-    auto ret = this->handleUpdate(http, VERSION, false);
+    auto ret = this->handleUpdate(http, version, false);
 
     int r;
     switch (ret) {

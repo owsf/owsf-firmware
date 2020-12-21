@@ -1,0 +1,15 @@
+/*
+ * (C) Copyright 2020 Tillmann Heidsieck
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+#ifndef _PROJECT_VERSION_H_
+#define _PROJECT_VERSION_H_
+
+#define VERSION "@VERSION@"
+#define BUILD_DATE "@BUILD_DATE@"
+//#define RELEASE
+//#define DEBUG
+
+#endif

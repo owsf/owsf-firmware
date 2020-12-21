@@ -30,7 +30,6 @@ FirmwareControl ctrl;
 void setup() {
     Serial.begin(115200);
     Serial.println();
-    Serial.printf("ESP8266 Firmware Version %s (%s)\n", VERSION, DATE);
     ctrl.setup();
 }
 
