@@ -21,6 +21,11 @@ pems = []
 with open(cert_list, "r") as f:
     pems = f.readlines()
 
+try:
+    os.mkdir('data')
+except:
+    pass
+
 idx = 0
 certs = []
 for p in pems:
