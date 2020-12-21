@@ -9,6 +9,9 @@
 #include <ESP8266WiFi.h>
 #include "control.h"
 
+/* enable ADC and configure for external circuitry */
+ADC_MODE(ADC_TOUT);
+
 /* From
  * ESP8266WiFi/examples/EarlyDisableWiFi/EarlyDisableWiFi.ino
  */
