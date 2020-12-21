@@ -7,8 +7,6 @@
 import os
 import subprocess
 
-#Import("env") # pylint:
-
 ca_paths = [
     "/usr/share/ca-certificates/mozilla",
     "/etc/ca-certificates",
@@ -26,7 +24,7 @@ with open(cert_list, "r") as f:
 idx = 0
 certs = []
 for p in pems:
-    found = None 
+    found = None
     p = p.lstrip().rstrip().replace("\n", "")
     for cap in ca_paths:
         if os.path.exists(cap + "/" + p):
