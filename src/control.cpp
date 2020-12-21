@@ -102,6 +102,8 @@ void FirmwareControl::query_ctrl() {
 void FirmwareControl::setup() {
     LittleFS.begin();
 
+    wss = (WiFiState *)RTC_USER_MEM;
+
     int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"), PSTR("/certs.ar"));
     Serial.print(F("Number of CA certs read: "));
     Serial.println(numCerts);
