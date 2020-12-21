@@ -10,7 +10,7 @@ import subprocess
 ca_paths = [
     "/usr/share/ca-certificates/mozilla",
     "/etc/ca-certificates",
-    "data"
+    "misc"
 ]
 
 cert_list = "misc/cert_list.txt"
