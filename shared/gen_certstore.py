@@ -41,7 +41,11 @@ for p in pems:
         certs.append(cert)
         idx = idx + 1
 
-os.unlink('data/certs.ar')
+try:
+    os.unlink('data/certs.ar')
+except:
+    pass
+
 subprocess.run(['ar', 'q', 'data/certs.ar'] + certs, shell=False)
 
 # cleanup temporary files
