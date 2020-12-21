@@ -8,6 +8,7 @@
 
 #include <ESP8266WiFi.h>
 #include "control.h"
+#include "rtcmem_map.h"
 
 /* enable ADC and configure for external circuitry */
 ADC_MODE(ADC_TOUT);
