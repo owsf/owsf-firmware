@@ -9,6 +9,8 @@ import os
 
 Import("env", "projenv")
 
+print("Prepare public key")
+
 default = "misc/public.key"
 try:
     pubkey = os.environ["FIRMWARE_PUBLIC_KEY"]
