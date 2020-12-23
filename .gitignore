@@ -42,6 +42,7 @@
 
 data/certs.ar
 data/config.js
+data/global_config.js
 
 # ignore generated files
 include/version.h
