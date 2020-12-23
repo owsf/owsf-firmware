@@ -7,6 +7,8 @@
 #include <Arduino.h>
 
 #include <ESP8266WiFi.h>
+
+#include "sensor.h"
 #include "control.h"
 #include "rtcmem_map.h"
 
