@@ -8,7 +8,7 @@
 from OpenSSL import crypto
 import os
 
-Import("projenv")
+Import("env")
 
 s = 1
 try:
@@ -30,4 +30,4 @@ if s:
         s = 0
 
 signing = "-DSIGNED_UPDATES=%d" % s
-projenv.Append(CPPDEFINES = [signing])
+env.Append(CPPDEFINES = [signing])
