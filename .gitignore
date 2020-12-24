@@ -46,3 +46,4 @@ data/global_config.js
 
 # ignore generated files
 include/version.h
+include/signing_pubkey.h
