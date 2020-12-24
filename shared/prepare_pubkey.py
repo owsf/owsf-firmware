@@ -7,7 +7,7 @@
 from OpenSSL import crypto
 import os
 
-Import("env", "projenv")
+Import("env")
 
 print("Prepare public key")
 
@@ -18,7 +18,7 @@ except:
     pubkey = default
 
 if not os.path.exists(pubkey):
-    projenv.Append(CPPDEFINES = ["-DSIGNED_UPDATES=0"])
+    env.Append(CPPDEFINES = ["-DSIGNED_UPDATES=0"])
     os.exit(0)
 
 pubkey_data = ""
@@ -30,9 +30,12 @@ try:
 except:
     os.exit(0)
 
-with open(projenv.subst("$BUILD_DIR/pubkey.cpp"), "w") as f:
+with open("include/signing_pubkey.h", "w") as f:
+    f.write('#ifndef _GENERATED_PUBKEY_H_\n')
+    f.write('#define _GENERATED_PUBKEY_H_\n')
+    f.write('#include <Arduino.h>\n')
     f.write('#include "pubkey.h"\n\n')
     f.write('const char pubkey[] PROGMEM = R"EOF(\n')
     f.write(pubkey_data)
-    f.write('EOF)";')
-    env.Append(EXTRA_LIBRARY_DIRS=["$BUILD_DIR"])
+    f.write(')EOF";\n')
+    f.write('#endif')
