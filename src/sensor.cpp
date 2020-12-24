@@ -111,7 +111,7 @@ void SensorManager::new_sensor(JsonVariant &j) {
 
     const char *type = j["type"].as<const char*>();
     for (std::pair<const char *, SensorFactory *> f: factories) {
-        if (!strncasecmp(f.first, type, strlen(f.first))) {
+        if (!strncasecmp(f.first, type, 64)) {
             factory = f.second;
             break;
         }
