@@ -19,12 +19,14 @@
 #include "updater.h"
 #include "version.h"
 
+#include "influxca.h"
+
 #define TZ_INFO "CET-1CEST,M3.5.0,M10.5.0/3"
 
 void FirmwareControl::set_clock() {
     char buffer[64];
 
-    configTime(TZ_INFO, "pool.ntp.org", "time.nist.gov");
+    configTzTime(TZ_INFO, "pool.ntp.org", "time.nist.gov");
 
     Serial.print(F("Waiting for NTP time sync: "));
     time_t now = time(nullptr);
@@ -76,7 +78,13 @@ void FirmwareControl::go_online() {
     wcs = new BearSSL::WiFiClientSecure();
     wcs->setCertStore(&cert_store);
 
-    influx = new InfluxDBClient(influx_url, influx_org, influx_bucket, influx_token, InfluxDbCloud2CACert);
+    influx = new InfluxDBClient(influx_url, influx_org, influx_bucket, influx_token, influxCA);
+    HTTPOptions opt;
+    opt.connectionReuse(true);
+    opt.httpReadTimeout(10000);
+    influx->setHTTPOptions(opt);
+    influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S));
+
     if (influx->validateConnection()) {
         Serial.print("Connected to InfluxDB: ");
         Serial.println(influx->getServerUrl());
