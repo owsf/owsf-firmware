@@ -41,8 +41,8 @@
 *.swp
 
 data/certs.ar
-data/config.js
-data/global_config.js
+data/config.json
+data/global_config.json
 
 # ignore generated files
 include/version.h

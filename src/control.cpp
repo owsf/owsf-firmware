@@ -131,7 +131,7 @@ void FirmwareControl::query_ctrl() {
 }
 
 void FirmwareControl::read_global_config() {
-    File file = LittleFS.open("/global_config.js", "r");
+    File file = LittleFS.open("/global_config.json", "r");
     if (!file)
         return;
 
@@ -154,7 +154,7 @@ void FirmwareControl::read_global_config() {
 }
 
 void FirmwareControl::read_config() {
-    File file = LittleFS.open("/config.js", "r");
+    File file = LittleFS.open("/config.json", "r");
     if (file) {
         StaticJsonDocument<1024> doc;
         DeserializationError error = deserializeJson(doc, file);
