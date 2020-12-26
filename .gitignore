@@ -49,4 +49,4 @@ include/version.h
 include/signing_pubkey.h
 server_data
 
-misc/mapping.js
+misc/mapping.json
