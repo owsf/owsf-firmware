@@ -1,7 +1,4 @@
 {
-    "config_version" : 1,
-    "device_name" : "test sensor",
-    "sleep_time_s" : 60,
     "sensors" : [
         {
             "type" : "ADC",
