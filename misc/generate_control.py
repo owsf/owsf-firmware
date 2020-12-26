@@ -15,7 +15,7 @@ import sys
 
 def global_config(data_dir, output_dir):
     plaintext = None
-    with open(os.path.join(data_dir, "global_config.js"), "rb") as f:
+    with open(os.path.join(data_dir, "global_config.json"), "rb") as f:
         plaintext = f.read()
 
     key = None
@@ -46,7 +46,7 @@ def local_config(mapping_file, output_dir):
             "sleep_time_s" : j[chip]["sleep_time_s"],
             "sensors" : sensors["sensors"],
         }
-        with open(os.path.join(output_dir, "config.js.%s" % (chip)), "w") as f:
+        with open(os.path.join(output_dir, "config.json.%s" % (chip)), "w") as f:
             f.write(json.dumps(jf, sort_keys=True, indent=4))
 
 
@@ -60,7 +60,7 @@ def firmware(src_dir, output_dir):
         "file" : filename,
     }
 
-    with open(os.path.join(output_dir, "firmware.js"), "w") as f:
+    with open(os.path.join(output_dir, "firmware.json"), "w") as f:
         f.write(json.dumps(fwjs, sort_keys=True, indent=4))
 
     with open(os.path.join(src_dir, ".pio", "build", "release", "firmware.sig"),
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="prepare config files")
     parser.add_argument("--data-dir", type=str, default="./data")
     parser.add_argument("--output-dir", type=str, default="./server_data")
-    parser.add_argument("--mapping-file", type=str, default="misc/mapping.js")
+    parser.add_argument("--mapping-file", type=str, default="misc/mapping.json")
     args = parser.parse_args()
 
     global_config(args.data_dir, args.output_dir)
