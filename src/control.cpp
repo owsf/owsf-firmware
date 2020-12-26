@@ -45,12 +45,89 @@ void FirmwareControl::set_clock() {
     Serial.println(buffer);
 }
 
-void FirmwareControl::OTA() {
-    if (update_url.length() < 11)
+void FirmwareControl::update_config(const char *name) {
+    StaticJsonDocument<1024> doc;
+    String url, filename;
+
+    https.useHTTP10(true);
+    https.setTimeout(5000);
+    https.addHeader(F("X-chip_id"), String(ESP.getChipId()));
+    if (!strncasecmp(name, "global_config", 13)) {
+        https.addHeader(F("X-global_config_version"), String(global_config_version));
+        https.addHeader(F("X-global_config_key"), String(global_config_key));
+        url = ctrl_url + "/global_config";
+        filename = String("/") + name + ".json";
+    } else if (!strncasecmp(name, "config", 6) ||
+               !strncasecmp(name, "local_config", 12)) {
+        https.addHeader(F("X-config_version"), String(config_version));
+        url = ctrl_url + "/local_config";
+        filename = F("/config.json");
+    }
+
+    if (!https.begin(*wcs, url))
         return;
 
+    int http_code = https.GET();
+    if (http_code < 0) {
+        https.end();
+        return;
+    }
+
+    /* Note: we do not use streaming API here! Because we try to be a little more
+     * safe here
+     * - First download new config
+     * - Second test if config is JSON format
+     * - Third write to file
+     */
+    String payload;
+    if (http_code == HTTP_CODE_OK) {
+        payload = https.getString();
+        DeserializationError error = deserializeJson(doc, payload.c_str());
+        if (error != DeserializationError::Ok) {
+            Serial.printf("Could not load config file");
+            https.end();
+            return;
+        }
+    } else {
+        Serial.print(https.getString());
+        Serial.println();
+        https.end();
+        return;
+    }
+    https.end();
+
+    File file = LittleFS.open(filename, "w");
+    if (!file)
+        return;
+
+    file.write(payload.c_str(), payload.length());
+
+    file.close();
+}
+
+void FirmwareControl::OTA() {
+    if (ctrl_url.length() < 11)
+        return;
+
+    int idx = ctrl_url.indexOf("/", 7);
+    if (idx)
+        ctrl_url.remove(idx);
+
+    String server = ctrl_url;
+    server.remove(0, server.indexOf(":") + 3);
+    bool mfln = wcs->probeMaxFragmentLength(server, 443, 1024);
+    if (mfln)
+        wcs->setBufferSizes(1024, 1024);
+    else
+        wcs->setBufferSizes(16384, 1024);
+
+    ctrl_url += "/api/v1";
+
+    update_config("global_config");
+    update_config("local_config");
+
     Updater upd;
-    upd.update(https, update_url, VERSION);
+    upd.update(https, ctrl_url + "/firmware", VERSION);
 }
 
 void FirmwareControl::go_online() {
@@ -78,7 +155,8 @@ void FirmwareControl::go_online() {
     wcs = new BearSSL::WiFiClientSecure();
     wcs->setCertStore(&cert_store);
 
-    influx = new InfluxDBClient(influx_url, influx_org, influx_bucket, influx_token, influxCA);
+    influx = new InfluxDBClient(influx_url, influx_org, influx_bucket,
+                                influx_token, influxCA);
     HTTPOptions opt;
     opt.connectionReuse(true);
     opt.httpReadTimeout(10000);
@@ -103,33 +181,6 @@ void FirmwareControl::deep_sleep() {
     ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
 }
 
-void FirmwareControl::query_ctrl() {
-    StaticJsonDocument<1024> doc;
-
-    String server = ctrl_url;
-    server.remove(0, server.indexOf(":") + 3);
-    server.remove(server.indexOf("/"));
-    bool mfln = wcs->probeMaxFragmentLength(server, 443, 512);
-    if (mfln)
-        wcs->setBufferSizes(512, 512);
-    else
-        wcs->setBufferSizes(16384, 512);
-
-    if (https.begin(*wcs, ctrl_url)) {
-        int http_code = https.GET();
-        if (http_code > 0) {
-            if (http_code == HTTP_CODE_OK) {
-                String payload = https.getString();
-                DeserializationError error = deserializeJson(doc, payload.c_str());
-                if (error != DeserializationError::Ok)
-                    Serial.printf("Could not load config file");
-                update_url = doc["firmware_update"] | "";
-            }
-        }
-    }
-    https.end();
-}
-
 void FirmwareControl::read_global_config() {
     File file = LittleFS.open("/global_config.json", "r");
     if (!file)
@@ -142,6 +193,9 @@ void FirmwareControl::read_global_config() {
         return;
     }
     file.close();
+
+    global_config_key = doc["global_config_key"] | "ABCDEF";
+    global_config_version = doc["global_config_version"] | 0;
 
     wifi_ssid = doc["wifi_ssid"] | "NO SSID";
     wifi_pass = doc["wifi_pass"] | "NO PSK";
@@ -166,6 +220,7 @@ void FirmwareControl::read_config() {
 
         sleep_time_s = doc["sleep_time_s"] | 60;
         device_name = doc["device_name"] | chip_id;
+        config_version = doc["config_version"] | 0;
 
         JsonArray ja = doc["sensors"].as<JsonArray>();
         sensor_manager = new SensorManager(ja);
@@ -184,7 +239,8 @@ void FirmwareControl::setup() {
 
     wss = (WiFiState *)RTCMEM_WSS;
 
-    int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"), PSTR("/certs.ar"));
+    int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"),
+                                            PSTR("/certs.ar"));
     Serial.print(F("Number of CA certs read: "));
     Serial.println(numCerts);
     if (numCerts == 0)
@@ -200,13 +256,18 @@ void FirmwareControl::setup() {
 }
 
 void FirmwareControl::loop() {
-    if (!online && go_online_request)
+    if (!online && (go_online_request || !sensor_manager))
         go_online();
 
 #if ENABLE_OTA
     if (online && (ESP.getResetReason() == "Power On" || !sensor_manager)) {
-        query_ctrl();
         OTA();
+
+        delay(1000);
+        pinMode(16, OUTPUT);
+        digitalWrite(16, 0);
+        /* we _should_ never reach this point ... but who knows */
+        delay(100000);
     }
 #endif
 
