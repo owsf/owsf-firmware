@@ -250,7 +250,7 @@ void FirmwareControl::setup() {
     read_config();
 
 #if ENABLE_OTA
-    if (ESP.getResetReason() == "Power On")
+    if (ESP.getResetReason() == "Power On" || ESP.getResetReason() == "External System")
         go_online_request = true;
 #endif
 }
@@ -260,7 +260,9 @@ void FirmwareControl::loop() {
         go_online();
 
 #if ENABLE_OTA
-    if (online && (ESP.getResetReason() == "Power On" || !sensor_manager)) {
+    if (online && (ESP.getResetReason() == "Power On" ||
+                   ESP.getResetReason() == "External System" ||
+                   !sensor_manager)) {
         OTA();
 
         delay(1000);
