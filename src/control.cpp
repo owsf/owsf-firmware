@@ -51,15 +51,15 @@ void FirmwareControl::update_config(const char *name) {
 
     https.useHTTP10(true);
     https.setTimeout(5000);
-    https.addHeader(F("X-chip_id"), String(ESP.getChipId()));
+    https.addHeader(F("X-chip-id"), String(ESP.getChipId()));
     if (!strncasecmp(name, "global_config", 13)) {
-        https.addHeader(F("X-global_config_version"), String(global_config_version));
-        https.addHeader(F("X-global_config_key"), String(global_config_key));
+        https.addHeader(F("X-global-config-version"), String(global_config_version));
+        https.addHeader(F("X-global-config-key"), String(global_config_key));
         url = ctrl_url + "/global_config";
         filename = String("/") + name + ".json";
     } else if (!strncasecmp(name, "config", 6) ||
                !strncasecmp(name, "local_config", 12)) {
-        https.addHeader(F("X-config_version"), String(config_version));
+        https.addHeader(F("X-config-version"), String(config_version));
         url = ctrl_url + "/local_config";
         filename = F("/config.json");
     }
