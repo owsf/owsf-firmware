@@ -1,5 +1,0 @@
-{
-	"firmware_version" : "@VERSION@",
-	"global_config_version" : @GLOBAL_CONFIG_VERSION@,
-	"config_version" : @CONFIG_VERSION@
-}

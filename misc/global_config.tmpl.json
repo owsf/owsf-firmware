@@ -1,11 +1,11 @@
 {
-    "global_config_version": @GLOBAL_CONFIG_VERSION@,
-    "global_config_key": "@GLOBAL_CONFIG_KEY@,
-    "wifi_ssid"  : "@WIFI_SSID@",
-    "wifi_pass"  : "@WIFI_PASS@",
-    "ctrl_url"   : "@CTRL_SERVER_URL@",
-    "influx_url" : "@INFLUX_URL@",
-    "influx_token"  : "@INFLUX_TOKEN@",
-    "influx_org": "@INFLUX_ORG@",
-    "influx_bucket": "@INFLUX_BUCKET@"
+    "global_config_version": 1,
+    "global_config_key": "BASE64_ENCODED_32_BYTE_KEY",
+    "wifi_ssid"  : "YOUR_SSID",
+    "wifi_pass"  : "YOUR_SUPER_SECRET_PASSWORD",
+    "ctrl_url"   : "BASE_URL_OF_THE_ESP8266_CTRL_SERVER",
+    "influx_url" : "INFLUX_DB_URL",
+    "influx_token"  : "INFLUX_DB_RW_TOKEN",
+    "influx_org": "INFLUX_DB_ORG",
+    "influx_bucket": "INFLUX_DB_BUCKET"
 }
