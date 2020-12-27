@@ -36,6 +36,5 @@ with open(env.subst("include/version.h"), "w") as f:
 
 if env.subst("$PIOENV") == "release" :
     m = re.match(r"(.*?)(-g[0-9a-f]{7})?(-dirty)?$", gitversion)
-    print(m)
-    if m and len(m.groups("")[1]) == 0 and len(m.groups("")[2]) == 0:
-        env.Replace(PROGNAME="firmware_%s" % gitversion)
+    if m and len(m.groups("")[2]) == 0:
+        env.Replace(PROGNAME="firmware_%s" % m.groups()[0].replace("-", "."))
