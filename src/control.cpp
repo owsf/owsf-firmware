@@ -249,17 +249,14 @@ void FirmwareControl::setup() {
     read_global_config();
     read_config();
 
-#if ENABLE_OTA
     if (ESP.getResetReason() == "Power On" || ESP.getResetReason() == "External System")
         go_online_request = true;
-#endif
 }
 
 void FirmwareControl::loop() {
     if (!online && (go_online_request || !sensor_manager))
         go_online();
 
-#if ENABLE_OTA
     if (online && (ESP.getResetReason() == "Power On" ||
                    ESP.getResetReason() == "External System" ||
                    !sensor_manager)) {
@@ -271,7 +268,6 @@ void FirmwareControl::loop() {
         /* we _should_ never reach this point ... but who knows */
         delay(100000);
     }
-#endif
 
     if (!sensor_manager->sensors_done())
         sensor_manager->loop();
