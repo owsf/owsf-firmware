@@ -43,7 +43,7 @@ def local_config(mapping_file, output_dir):
             sensors = json.load(f)
         jf = {
             "config_version" : j[chip]["config_version"],
-            "name" : j[chip]["name"],
+            "device_name" : j[chip]["device_name"],
             "sleep_time_s" : j[chip]["sleep_time_s"],
             "sensors" : sensors["sensors"],
         }
