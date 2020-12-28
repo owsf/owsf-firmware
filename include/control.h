@@ -20,10 +20,10 @@ private:
     String global_config_key;
     uint32_t global_config_version;
 
-    const char *influx_url;
-    const char *influx_org;
-    const char *influx_bucket;
-    const char *influx_token;
+    const char *influx_url = nullptr;
+    const char *influx_org = nullptr;
+    const char *influx_bucket = nullptr;
+    const char *influx_token = nullptr;
 
     String device_name;
 
@@ -36,16 +36,17 @@ private:
     BearSSL::CertStore cert_store;
 
     bool go_online_request;
+    bool ota_request;
     bool online;
 
-    //std::unique_ptr<BearSSL::WiFiClientSecure> wcs;
-    BearSSL::WiFiClientSecure *wcs;
-    HTTPClient https;
+    WiFiClient *wifi_client;
+    BearSSL::X509List *_cert = nullptr;
+    HTTPClient *https = nullptr;
 
-    WiFiState *wss;
+    WiFiState *wss = nullptr;
 
-    SensorManager *sensor_manager;
-    InfluxDBClient *influx;
+    SensorManager *sensor_manager = nullptr;
+    InfluxDBClient *influx = nullptr;
 
 protected:
     void read_global_config();

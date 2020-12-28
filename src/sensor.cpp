@@ -141,7 +141,7 @@ SensorManager::SensorManager(const JsonArray &j) {
         new_sensor(v);
     }
 
-    Serial.printf("SensorManger() done");
+    Serial.println(F("SensorManger() done"));
 }
 
 bool SensorManager::upload_requested() {
