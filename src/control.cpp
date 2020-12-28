@@ -23,6 +23,7 @@
 
 #define TZ_INFO "CET-1CEST,M3.5.0,M10.5.0/3"
 
+
 void FirmwareControl::set_clock() {
     char buffer[64];
 
@@ -36,7 +37,7 @@ void FirmwareControl::set_clock() {
         Serial.print(F("."));
         now = time(nullptr);
     }
-    Serial.printf("\n");
+    Serial.println();
 
     struct tm timeinfo;
     gmtime_r(&now, &timeinfo);
@@ -46,30 +47,34 @@ void FirmwareControl::set_clock() {
 }
 
 void FirmwareControl::update_config(const char *name) {
+    Serial.print(F("Update configuration: "));
+    Serial.println(name);
+
     StaticJsonDocument<1024> doc;
-    String url, filename;
 
-    https.useHTTP10(true);
-    https.setTimeout(5000);
-    https.addHeader(F("X-chip-id"), String(ESP.getChipId()));
-    if (!strncasecmp(name, "global_config", 13)) {
-        https.addHeader(F("X-global-config-version"), String(global_config_version));
-        https.addHeader(F("X-global-config-key"), String(global_config_key));
-        url = ctrl_url + "/global_config";
-        filename = String("/") + name + ".json";
-    } else if (!strncasecmp(name, "config", 6) ||
-               !strncasecmp(name, "local_config", 12)) {
-        https.addHeader(F("X-config-version"), String(config_version));
-        url = ctrl_url + "/local_config";
-        filename = F("/config.json");
-    }
-
-    if (!https.begin(*wcs, url))
+    String url = ctrl_url + "/" + name;
+    if (!https->begin(*wifi_client, url))
         return;
 
-    int http_code = https.GET();
+    https->setUserAgent(F("ESP8266-OTA"));
+    https->addHeader(F("X-chip-id"), chip_id);
+
+    String filename;
+    if (!strncasecmp(name, "global_config", 13)) {
+        https->addHeader(F("X-global-config-version"), String(global_config_version));
+        https->addHeader(F("X-global-config-key"), String(global_config_key));
+        filename = String("/") + name + ".json";
+    } else if (!strncasecmp(name, "local_config", 12)) {
+        https->addHeader(F("X-config-version"), String(config_version));
+        filename = F("/config.json");
+    } else {
+        https->end();
+        return;
+    }
+
+    int http_code = https->GET();
     if (http_code < 0) {
-        https.end();
+        https->end();
         return;
     }
 
@@ -81,20 +86,20 @@ void FirmwareControl::update_config(const char *name) {
      */
     String payload;
     if (http_code == HTTP_CODE_OK) {
-        payload = https.getString();
+        payload = https->getString();
         DeserializationError error = deserializeJson(doc, payload.c_str());
         if (error != DeserializationError::Ok) {
             Serial.printf("Could not load config file");
-            https.end();
+            https->end();
             return;
         }
     } else {
-        Serial.print(https.getString());
+        Serial.print(https->getString());
         Serial.println();
-        https.end();
+        https->end();
         return;
     }
-    https.end();
+    https->end();
 
     File file = LittleFS.open(filename, "w");
     if (!file)
@@ -106,32 +111,52 @@ void FirmwareControl::update_config(const char *name) {
 }
 
 void FirmwareControl::OTA() {
-    if (ctrl_url.length() < 11)
+    if (ctrl_url.length() < 11) {
+        Serial.println(F("Invalid CTRL_URL"));
         return;
+    }
 
-    int idx = ctrl_url.indexOf("/", 7);
-    if (idx)
-        ctrl_url.remove(idx);
+    BearSSL::WiFiClientSecure *wcs = new BearSSL::WiFiClientSecure;
+    if (!wcs) {
+        Serial.println(F("OOM: could not allocate WiFiClientSecure"));
+        return;
+    }
+
+    wcs->setCertStore(&cert_store);
 
     String server = ctrl_url;
     server.remove(0, server.indexOf(":") + 3);
     bool mfln = wcs->probeMaxFragmentLength(server, 443, 1024);
-    if (mfln)
+    if (mfln) {
+        Serial.println(F("MFLN supported"));
         wcs->setBufferSizes(1024, 1024);
-    else
-        wcs->setBufferSizes(16384, 1024);
+    }
+
+    wifi_client = wcs;
+
+    https = new HTTPClient;
+    if (!https) {
+        Serial.println(F("OOM: could not allocate HTTPClient"));
+        return;
+    }
+
+    https->setReuse(true);
+    https->setTimeout(20000);
 
     ctrl_url += "/api/v1";
+
+    Serial.print(F("control server: "));
+    Serial.println(ctrl_url);
 
     update_config("global_config");
     update_config("local_config");
 
     Updater upd;
-    upd.update(https, ctrl_url + "/firmware", VERSION);
+    upd.update(*https, ctrl_url + "/firmware", VERSION);
 }
 
 void FirmwareControl::go_online() {
-    Serial.printf("going online ...");
+    Serial.println(("going online ..."));
     WiFi.forceSleepWake();
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid, wifi_pass);
@@ -148,32 +173,32 @@ void FirmwareControl::go_online() {
     if (online) {
         set_clock();
     } else {
-        Serial.printf("Failed to go online");
+        Serial.println(F("Failed to go online"));
         return;
     }
 
-    wcs = new BearSSL::WiFiClientSecure();
-    wcs->setCertStore(&cert_store);
+    if (!ota_request) {
+        influx = new InfluxDBClient(influx_url, influx_org, influx_bucket,
+                                    influx_token, influxCA);
+        HTTPOptions opt;
+        opt.connectionReuse(true);
+        opt.httpReadTimeout(10000);
+        influx->setHTTPOptions(opt);
+        influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S));
 
-    influx = new InfluxDBClient(influx_url, influx_org, influx_bucket,
-                                influx_token, influxCA);
-    HTTPOptions opt;
-    opt.connectionReuse(true);
-    opt.httpReadTimeout(10000);
-    influx->setHTTPOptions(opt);
-    influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S));
-
-    if (influx->validateConnection()) {
-        Serial.print("Connected to InfluxDB: ");
-        Serial.println(influx->getServerUrl());
-    } else {
-        Serial.print("InfluxDB connection failed: ");
-        Serial.println(influx->getLastErrorMessage());
+        if (influx->validateConnection()) {
+            Serial.print("Connected to InfluxDB: ");
+            Serial.println(influx->getServerUrl());
+        } else {
+            Serial.print("InfluxDB connection failed: ");
+            Serial.println(influx->getLastErrorMessage());
+        }
     }
 }
 
 void FirmwareControl::deep_sleep() {
-    Serial.printf(" -> deep sleep for %u seconds\n", sleep_time_s);
+    Serial.print(F(" -> deep sleep for "));
+    Serial.println(sleep_time_s);
 
     if (online)
         WiFi.mode(WIFI_SHUTDOWN, wss);
@@ -189,7 +214,7 @@ void FirmwareControl::read_global_config() {
     StaticJsonDocument<1024> doc;
     DeserializationError error = deserializeJson(doc, file);
     if (error != DeserializationError::Ok) {
-        Serial.printf("Could not global load config file");
+        Serial.println(F("Could not global load config file"));
         return;
     }
     file.close();
@@ -200,6 +225,9 @@ void FirmwareControl::read_global_config() {
     wifi_ssid = doc["wifi_ssid"] | "NO SSID";
     wifi_pass = doc["wifi_pass"] | "NO PSK";
     ctrl_url  = doc["ctrl_url"]  | "https://example.com";
+    int idx = ctrl_url.indexOf("/", 8);
+    if (idx)
+        ctrl_url.remove(idx);
 
     influx_url = strdup(doc["influx_url"] | "https://example.com");
     influx_token = strdup(doc["influx_token"] | "ABCDEFG");
@@ -225,7 +253,7 @@ void FirmwareControl::read_config() {
         JsonArray ja = doc["sensors"].as<JsonArray>();
         sensor_manager = new SensorManager(ja);
     } else {
-        go_online_request = true;
+        ota_request = true;
     }
 }
 
@@ -234,7 +262,9 @@ void FirmwareControl::setup() {
 
     Serial.printf("ESP8266 Firmware Version %s (%s)\n", VERSION, BUILD_DATE);
     Serial.printf("  Chip ID: %s\n", chip_id);
-
+    Serial.printf("  CPU Freq: %hhu\n", ESP.getCpuFreqMHz());
+    Serial.print(F("  Reset Reason: "));
+    Serial.println(ESP.getResetReason());
     LittleFS.begin();
 
     wss = (WiFiState *)RTCMEM_WSS;
@@ -244,30 +274,30 @@ void FirmwareControl::setup() {
     Serial.print(F("Number of CA certs read: "));
     Serial.println(numCerts);
     if (numCerts == 0)
-        Serial.printf("No certs found");
+        Serial.printf("No certs found\n");
 
     read_global_config();
     read_config();
 
-    if (ESP.getResetReason() == "Power On" || ESP.getResetReason() == "External System")
-        go_online_request = true;
+    if (ESP.getResetReason() == F("Power On"))
+        ota_request = true;
+
+    if (ESP.getResetReason() == F("External System"))
+        ota_request = true;
 }
 
 void FirmwareControl::loop() {
-    if (!online && (go_online_request || !sensor_manager))
+    if (!online && (go_online_request || ota_request)) {
         go_online();
-
-    if (online && (ESP.getResetReason() == "Power On" ||
-                   ESP.getResetReason() == "External System" ||
-                   !sensor_manager)) {
-        OTA();
-
-        delay(1000);
-        pinMode(16, OUTPUT);
-        digitalWrite(16, 0);
-        /* we _should_ never reach this point ... but who knows */
-        delay(100000);
     }
+
+    if (online && ota_request) {
+        OTA();
+        ESP.reset();
+    }
+
+    if (ota_request)
+        return;
 
     if (!sensor_manager->sensors_done())
         sensor_manager->loop();
@@ -294,6 +324,6 @@ void FirmwareControl::loop() {
 
 FirmwareControl::FirmwareControl() :
     influx_url(nullptr), influx_org(nullptr), influx_bucket(nullptr), influx_token(nullptr),
-    sleep_time_s(600), go_online_request(false), online(false), wcs(nullptr), wss(nullptr),
+    sleep_time_s(600), go_online_request(false), online(false), wss(nullptr),
     sensor_manager(nullptr), influx(nullptr) {
 }
