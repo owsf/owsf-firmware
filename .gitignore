@@ -50,3 +50,5 @@ include/signing_pubkey.h
 server_data
 
 misc/mapping.json
+__pycache__
+.coverage
