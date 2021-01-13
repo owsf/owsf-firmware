@@ -64,7 +64,7 @@ void Sensor_BME280::publish(Point &p) {
 
     p.addField("temperature", temp);
     p.addField("humidity", hum);
-    p.addField("pressure", pres);
+    p.addField("pressure", pres / 100.0);
 }
 
 Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
