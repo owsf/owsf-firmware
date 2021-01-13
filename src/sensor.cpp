@@ -36,7 +36,7 @@ Sensor_State Sensor_ADC::sample() {
 }
 
 void Sensor_ADC::publish(Point &p) {
-    p.addField("voltage", current_value * 0.01);
+    p.addField("voltage", current_value);
 }
 
 Sensor_State Sensor_BME280::sample() {
