@@ -41,6 +41,6 @@ def sign_binary(source, target, env):
     with open(env.subst("$BUILD_DIR/${PROGNAME}.sig"), "wb") as f:
         f.write(data)
         f.write(sig)
-        f.write(struct.pack("L", len(sig)))
+        f.write(struct.pack("I", len(sig)))
 
 env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", sign_binary)
