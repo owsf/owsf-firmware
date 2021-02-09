@@ -7,14 +7,12 @@
 #ifndef _RTCMEM_MAP_H_
 #define _RTCMEM_MAP_H_
 
-#include <ESP8266WiFi.h>
-
 #define RTCMEM_WSS RTC_USER_MEM
-#define RTCMEM_SENSOR0 (RTCMEM_WSS + sizeof(struct WiFiState))
+#define RTCMEM_SENSOR0 (128 - 32)
 /* sensors require 128bytes total */
-#define RTCMEM_SENSOR1 (RTCMEM_SENSOR0 + 8 * sizeof(uint32_t))
-#define RTCMEM_SENSOR2 (RTCMEM_SENSOR1 + 8 * sizeof(uint32_t))
-#define RTCMEM_SENSOR3 (RTCMEM_SENSOR2 + 8 * sizeof(uint32_t))
-#define RTCMEM_SENSOR4 (RTCMEM_SENSOR3 + 8 * sizeof(uint32_t))
+#define RTCMEM_SENSOR1 (RTCMEM_SENSOR0 + 8)
+#define RTCMEM_SENSOR2 (RTCMEM_SENSOR1 + 8)
+#define RTCMEM_SENSOR3 (RTCMEM_SENSOR2 + 8)
+#define RTCMEM_SENSOR4 (RTCMEM_SENSOR3 + 8)
 
 #endif
