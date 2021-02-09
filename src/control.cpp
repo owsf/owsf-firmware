@@ -50,7 +50,7 @@ void FirmwareControl::update_config(const char *name) {
     Serial.print(F("Update configuration: "));
     Serial.println(name);
 
-    StaticJsonDocument<1024> doc;
+    DynamicJsonDocument doc(1024);
 
     String url = ctrl_url + "/" + name;
     if (!https->begin(*wifi_client, url))
