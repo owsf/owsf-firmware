@@ -1,51 +1,39 @@
-name: CI
+name: normal_build
 
 on:
   push:
   pull_request:
-    branches: [main]
-  workflow_dispatch:
-
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    # This is the list of steps this job will run.
+  gen_artifacts:
+    runs-on: ubuntu-20.04
     steps:
-      # First of all, we clone the repo using the `checkout` action.
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-              fetch-depth: 1
+    - name: checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+        fetch-depth: 1
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel platformio pyOpenSSL
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Install dependencies
+      run: |
+        pip3 install -U --user -r misc/requirements.txt
 
-      - name: Build firmware (debug version)
-        run: pio run -e debug
+    - name: Build firmware (release version)
+      run: |
+        export PATH=$PATH:$HOME/.local/bin
+        platformio run -j 16 -e release
+      env:
+        FIRMWARE_PUBLIC_KEY: ${{ secrets.FIRMWARE_PUBLIC_KEY }}
+        FIRMWARE_SIGNING_PKEY: ${{ secrets.FIRMWARE_SIGNING_PKEY }}
 
-        #- name: Test Firmware
-        #  working-directory: Tonuino
-        #  run: pio run -t test -e native
-
-      - name: Build firmware (release version)
-        run: pio run -e release
-        env:
-          FIRMWARE_SIGNING_PKEY: ${{ secrets.FIRMWARE_SIGNING_KEY }}
-
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v2
-        with:
-          # Artifact name
-          name: # optional
-          # Destination path
-          path: # optional
+    - name: upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: |
+          .pio/build/release/firmware_*.sig
