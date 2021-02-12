@@ -8,7 +8,8 @@
 #ifndef _BME280_H_
 #define _BME280_H_
 
-#include <BME280I2C.h>
+#include <Adafruit_BME280.h>
+#include <Wire.h>
 
 #include "sensor.h"
 
@@ -18,7 +19,8 @@ private:
     int sda, scl;
     float temp, hum, pres;
     bool initialized;
-    BME280I2C bme;
+    TwoWire i2c;
+    Adafruit_BME280 bme;
     Sensor_State state = SENSOR_NOT_INIT;
 
 public:
