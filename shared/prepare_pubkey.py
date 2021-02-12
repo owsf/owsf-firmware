@@ -12,18 +12,16 @@ Import("env")
 print("Prepare public key")
 
 default = "misc/public.key"
+pubkey_data = ""
 try:
-    pubkey = os.environ["FIRMWARE_PUBLIC_KEY"]
+    pubkey_data = os.environ["FIRMWARE_PUBLIC_KEY"]
 except:
-    pubkey = default
+    with open(default, "r") as f:
+        pubkey_data = f.read()
 
-if not os.path.exists(pubkey):
+if not pubkey_data:
     env.Append(CPPDEFINES = ["-DSIGNED_UPDATES=0"])
     os.exit(0)
-
-pubkey_data = ""
-with open(pubkey, "r") as f:
-    pubkey_data = f.read()
 
 try:
     tmp = crypto.load_publickey(crypto.FILETYPE_PEM, pubkey_data)
