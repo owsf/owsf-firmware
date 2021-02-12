@@ -1,0 +1,4 @@
+platformio
+pyOpenSSL
+setuptools
+wheel
