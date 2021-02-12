@@ -7,24 +7,8 @@
 
 #include "sensor.h"
 
-Sensor_State Sensor_ADC::sample() {
-    if (state != SENSOR_INIT)
-        return state;
-
-    Serial.printf("  Sampling sensor ADC\n");
-
-    current_value = factor * (1. * analogRead(0)) * (1 + r1 / r2) / 1024 + offset;
-
-    state = SENSOR_DONE_UPDATE;
-
-    return state;
-}
-
-void Sensor_ADC::publish(Point &p) {
-    p.addField("voltage", current_value);
-}
-
 /* sensor specific includes */
+#include "adc.h"
 #include "bme280.h"
 
 void SensorManager::register_sensor_class(const char *type, SensorFactory *sf) {
