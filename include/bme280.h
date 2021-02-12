@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2020 Tillmann Heidsieck
+ * (C) Copyright 2021 Tillmann Heidsieck
  *
  * SPDX-License-Identifier: MIT
  *
