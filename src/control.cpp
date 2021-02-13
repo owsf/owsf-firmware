@@ -157,7 +157,10 @@ void FirmwareControl::OTA() {
 
 void FirmwareControl::go_online() {
     Serial.println(("going online ..."));
+    WiFi.forceSleepBegin();
+    delay(1);
     WiFi.forceSleepWake();
+    delay(1);
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid, wifi_pass);
 
