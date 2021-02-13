@@ -11,7 +11,14 @@
 #include <Adafruit_BME280.h>
 #include <Wire.h>
 
+#include "rtcmem_map.h"
 #include "sensor.h"
+
+struct bme280_rtc_data {
+    float temp;
+    float hum;
+    float pres;
+}__attribute__ ((packed));
 
 class Sensor_BME280 : public Sensor {
 private:
@@ -21,6 +28,8 @@ private:
     bool initialized;
     TwoWire i2c;
     Adafruit_BME280 bme;
+    int mem;
+    bme280_rtc_data rtc_data;
     Sensor_State state = SENSOR_NOT_INIT;
 
 public:
@@ -28,7 +37,7 @@ public:
     void publish(Point &) override;
 
     explicit Sensor_BME280(const JsonVariant &);
-    Sensor_BME280() : sda(2), scl(14), temp(21.), hum(50.), pres(1080.), initialized(false), bme() {}
+    Sensor_BME280() : sda(2), scl(14), temp(21.), hum(50.), pres(1080.), initialized(false), bme(), mem(-1) {}
     ~Sensor_BME280() {}
 };
 
