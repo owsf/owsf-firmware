@@ -21,12 +21,12 @@ except:
 
 if not pubkey_data:
     env.Append(CPPDEFINES = ["-DSIGNED_UPDATES=0"])
-    os.exit(0)
+    exit(0)
 
 try:
     tmp = crypto.load_publickey(crypto.FILETYPE_PEM, pubkey_data)
 except:
-    os.exit(0)
+    exit(0)
 
 with open("include/signing_pubkey.h", "w") as f:
     f.write('#ifndef _GENERATED_PUBKEY_H_\n')
