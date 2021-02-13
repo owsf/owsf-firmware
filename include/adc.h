@@ -7,7 +7,12 @@
 #ifndef _ADC_H_
 #define _ADC_H_
 
+#include "rtcmem_map.h"
 #include "sensor.h"
+
+struct adc_rtc_data {
+    float current_value;
+}__attribute__ ((packed));
 
 class Sensor_ADC : public Sensor {
 private:
@@ -16,6 +21,8 @@ private:
    float r2;
    float offset;
    float factor;
+   struct adc_rtc_data rtc_data;
+   int mem;
    Sensor_State state = SENSOR_INIT;
 
 public:
@@ -27,9 +34,10 @@ public:
         r2 = j["R2"] | 47000.;
         offset = j["offset"] | 0.;
         factor = j["factor"] | 1.;
+        mem = get_rtc_addr(j);
     }
 
-    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.) {}
+    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1) {}
     ~Sensor_ADC() {}
 };
 
