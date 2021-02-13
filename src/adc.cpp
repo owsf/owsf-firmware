@@ -14,12 +14,21 @@ void Sensor_ADC::publish(Point &p) {
 Sensor_State Sensor_ADC::sample() {
     if (state != SENSOR_INIT)
         return state;
+    state = SENSOR_DONE_NOUPDATE;
 
     Serial.printf("  Sampling sensor ADC\n");
 
     current_value = factor * (1. * analogRead(0)) * (1 + r1 / r2) / 1024 + offset;
 
-    state = SENSOR_DONE_UPDATE;
+    if (mem < 0) {
+        state = SENSOR_DONE_UPDATE;
+        return state;
+    }
+
+    ESP.rtcUserMemoryRead(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
+    if (threshold_helper_float(current_value, &rtc_data.current_value, 0.02))
+        state = SENSOR_DONE_UPDATE;
+    ESP.rtcUserMemoryWrite(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
 
     return state;
 }
