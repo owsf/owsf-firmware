@@ -54,7 +54,7 @@ public:
         this->manager = sm;
         this->manager->register_sensor_class(type_str, this);
     }
-    
+
     BME280Factory() {}
     ~BME280Factory() {}
 };
