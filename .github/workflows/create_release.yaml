@@ -1,0 +1,74 @@
+name: create_release
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - '*'
+
+jobs:
+  gen_artifacts:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+        fetch-depth: 1
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        pip3 install -U --user -r misc/requirements.txt
+
+    - name: Build firmware (release version)
+      run: |
+        export PATH=$PATH:$HOME/.local/bin
+        platformio run -j 16 -e release
+      env:
+        FIRMWARE_PUBLIC_KEY: ${{ secrets.FIRMWARE_PUBLIC_KEY }}
+        FIRMWARE_SIGNING_PKEY: ${{ secrets.FIRMWARE_SIGNING_PKEY }}
+
+    - name: upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: |
+          .pio/build/release/firmware_*.sig
+
+  create_release:
+    runs-on: ubuntu-20.04
+    needs: gen_artifacts
+    steps:
+    - name: create firmware folder
+      run: |
+        mkdir firmware
+
+    - name: get artifacts
+      uses: actions/download-artifact@v2
+      id: get_artifacts
+      with:
+        name: firmware
+        path: firmware/
+
+    - name: get firmware name and path
+      run: |
+        FW_PATH=$(ls firmware/firmware_*.sig)
+        echo "::set-output name=path::$FW_PATH"
+        FW_NAME=$(basename $FW_PATH)
+        echo "::set-output name=name::$FW_NAME"
+      id: fw_path
+
+    - name: upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ steps.fw_path.outputs.path }}
+        asset_name: ${{ steps.fw_path.outputs.name }}
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: Release ${{ github.ref }}
