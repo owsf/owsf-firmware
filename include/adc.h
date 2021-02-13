@@ -16,7 +16,7 @@ struct adc_rtc_data {
 
 class Sensor_ADC : public Sensor {
 private:
-   float current_value; 
+   float current_value;
    float r1;
    float r2;
    float offset;
