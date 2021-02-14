@@ -10,6 +10,7 @@
 /* sensor specific includes */
 #include "adc.h"
 #include "bme280.h"
+#include "sensor_ds18b20.h"
 
 void SensorManager::register_sensor_class(const char *type, SensorFactory *sf) {
     if (!type || !sf) {
@@ -50,10 +51,12 @@ void SensorManager::new_sensor(JsonVariant &j) {
 
 ADCFactory adc_factory;
 BME280Factory bme280_factory;
+DS18B20Factory ds18b20_factory;
 
 SensorManager::SensorManager(const JsonArray &j) {
     bme280_factory.register_factory(this);
     adc_factory.register_factory(this);
+    ds18b20_factory.register_factory(this);
 
     for (JsonVariant v : j) {
         Serial.printf("found sensor type %s\n", v["type"].as<const char *>());
