@@ -47,7 +47,7 @@ Sensor_DS18B20::Sensor_DS18B20(const JsonVariant &j) :
     uint8_t pin;
     int rtcmem;
 
-    Serial.println(F("Initializing DS18B20 "));
+    Serial.println(F("Initializing DS18B20"));
 
     initialized = false;
     pin = j["pin"] | 12;
@@ -60,7 +60,7 @@ Sensor_DS18B20::Sensor_DS18B20(const JsonVariant &j) :
     mem = RTCMEM_SENSOR(rtcmem);
 
     ds = new DS18B20(pin);
-    if (! ds->selectNext())
+    if (!ds->selectNext())
         return;
 
     initialized = true;
