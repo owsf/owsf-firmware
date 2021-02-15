@@ -21,8 +21,8 @@ private:
    float r2;
    float offset;
    float factor;
-   struct adc_rtc_data rtc_data;
    int mem;
+   struct adc_rtc_data rtc_data;
    String sensor_type;
    String tags;
    Sensor_State state = SENSOR_INIT;
