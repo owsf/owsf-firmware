@@ -5,7 +5,11 @@
  *
  */
 
+#include <Arduino.h>
+#include <time.h>
+
 #include "sensor.h"
+#include "version.h"
 
 /* sensor specific includes */
 #include "adc.h"
@@ -54,6 +58,7 @@ BME280Factory bme280_factory;
 DS18B20Factory ds18b20_factory;
 
 SensorManager::SensorManager(const JsonArray &j) {
+    num_sensors = 0;
     bme280_factory.register_factory(this);
     adc_factory.register_factory(this);
     ds18b20_factory.register_factory(this);
@@ -61,6 +66,7 @@ SensorManager::SensorManager(const JsonArray &j) {
     for (JsonVariant v : j) {
         Serial.printf("found sensor type %s\n", v["type"].as<const char *>());
         new_sensor(v);
+        num_sensors++;
     }
 
     Serial.println(F("SensorManger() done"));
@@ -88,7 +94,23 @@ void SensorManager::loop() {
     }
 }
 
-void SensorManager::publish(Point &p) {
-    for (Sensor *s : sensors)
+void SensorManager::publish(InfluxDBClient *c, String *device_name,
+                            char *chip_id) {
+    for (Sensor *s : sensors) {
+        Point p("sensor_data");
+        p.addTag("device", *device_name);
+        p.addTag("chip_id", chip_id);
+        p.addTag("firmware_version", VERSION);
+        p.setTime(time(nullptr));
+        p.addTag("sensor_type", s->get_sensor_type());
+        if (s->get_tags() != "")
+            p.addTag("sensor_tags", s->get_tags());
         s->publish(p);
+        Serial.println(c->pointToLineProtocol(p));
+        c->writePoint(p);
+    }
+}
+
+uint8_t SensorManager::get_num_sensors() {
+    return num_sensors;
 }

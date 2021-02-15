@@ -181,13 +181,16 @@ void FirmwareControl::go_online() {
     }
 
     if (!ota_request) {
+        uint8_t num_sensors;
+
+        num_sensors = sensor_manager->get_num_sensors();
         influx = new InfluxDBClient(influx_url, influx_org, influx_bucket,
                                     influx_token, influxCA);
         HTTPOptions opt;
         opt.connectionReuse(true);
         opt.httpReadTimeout(10000);
         influx->setHTTPOptions(opt);
-        influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S));
+        influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S).batchSize(num_sensors).bufferSize(2*num_sensors));
 
         if (influx->validateConnection()) {
             Serial.print("Connected to InfluxDB: ");
@@ -310,14 +313,13 @@ void FirmwareControl::loop() {
 
     if (sensor_manager->sensors_done()) {
         if (online) {
-            Point p("sensor_data");
-            p.addTag("device", device_name);
-            p.addTag("chip_id", chip_id);
-            p.addTag("firmware_version", VERSION);
-            p.setTime(time(nullptr));
-            sensor_manager->publish(p);
-            Serial.println(influx->pointToLineProtocol(p));
-            influx->writePoint(p);
+            sensor_manager->publish(influx, &device_name, chip_id);
+            if (!influx->flushBuffer()) {
+                Serial.print("InfluxDB flush failed: ");
+                Serial.println(influx->getLastErrorMessage());
+                Serial.print("Full buffer: ");
+                Serial.println(influx->isBufferFull() ? "Yes" : "No");
+            }
             deep_sleep();
         } else if (!sensor_manager->upload_requested()) {
             deep_sleep();

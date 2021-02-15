@@ -53,7 +53,7 @@ void Sensor_BME280::publish(Point &p) {
 }
 
 Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
-    temp(21.), hum(50.), pres(1080.), bme(), mem(-1)
+    temp(21.), hum(50.), pres(1080.), bme(), mem(-1), sensor_type("BME280")
 {
     Serial.println(F("Initializing BME280 "));
 
@@ -62,6 +62,8 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
     scl = j["scl"] | 14;
 
     mem = get_rtc_addr(j);
+
+    tags = j["tags"] | "";
 
     Wire.begin(sda, scl);
     if (!bme.begin(addr, &Wire))
@@ -74,4 +76,12 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
                     Adafruit_BME280::FILTER_OFF);
 
     initialized = true;
+}
+
+String &Sensor_BME280::get_sensor_type() {
+    return sensor_type;
+}
+
+String &Sensor_BME280::get_tags() {
+    return tags;
 }
