@@ -28,6 +28,9 @@ private:
     bool initialized;
     TwoWire i2c;
     Adafruit_BME280 bme;
+    float threshold_pres;
+    float threshold_hum;
+    float threshold_temp;
     int mem;
     bme280_rtc_data rtc_data;
     String sensor_type;
