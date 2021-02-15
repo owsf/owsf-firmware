@@ -9,7 +9,7 @@
 #include <ArduinoJson.h>
 
 #define RTCMEM_WSS RTC_USER_MEM
-#define RTCMEM_SENSOR0 (128 - 32)
+#define RTCMEM_SENSOR0 (128 - 40)
 /* sensors require 128bytes total */
 #define RTCMEM_SENSOR1 (RTCMEM_SENSOR0 + 8)
 #define RTCMEM_SENSOR2 (RTCMEM_SENSOR1 + 8)
