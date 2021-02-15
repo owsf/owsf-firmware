@@ -31,14 +31,14 @@ Sensor_State Sensor_BME280::sample() {
         return state;
     }
 
-    ESP.rtcUserMemoryRead(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
+    ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
     if (threshold_helper_float(pres, &rtc_data.temp, threshold_pres))
         state = SENSOR_DONE_UPDATE;
     if (threshold_helper_float(hum, &rtc_data.temp, threshold_hum))
         state = SENSOR_DONE_UPDATE;
     if (threshold_helper_float(temp, &rtc_data.temp, threshold_temp))
         state = SENSOR_DONE_UPDATE;
-    ESP.rtcUserMemoryWrite(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
+    ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
 
     return state;
 }
