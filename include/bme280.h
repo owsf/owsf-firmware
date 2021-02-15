@@ -30,14 +30,20 @@ private:
     Adafruit_BME280 bme;
     int mem;
     bme280_rtc_data rtc_data;
+    String sensor_type;
+    String tags;
     Sensor_State state = SENSOR_NOT_INIT;
 
 public:
     Sensor_State sample() override;
     void publish(Point &) override;
 
+    String &get_sensor_type() override;
+    String &get_tags() override;
+
     explicit Sensor_BME280(const JsonVariant &);
-    Sensor_BME280() : sda(2), scl(14), temp(21.), hum(50.), pres(1080.), initialized(false), bme(), mem(-1) {}
+    Sensor_BME280() : sda(2), scl(14), temp(21.), hum(50.), pres(1080.),
+    initialized(false), bme(), mem(-1), sensor_type(), tags() {}
     ~Sensor_BME280() {}
 };
 

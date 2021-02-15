@@ -23,21 +23,28 @@ private:
    float factor;
    struct adc_rtc_data rtc_data;
    int mem;
+   String sensor_type;
+   String tags;
    Sensor_State state = SENSOR_INIT;
 
 public:
     Sensor_State sample() override;
     void publish(Point &) override;
 
-    explicit Sensor_ADC(const JsonVariant &j) : current_value(0) {
+    String &get_sensor_type() override;
+    String &get_tags() override;
+
+    explicit Sensor_ADC(const JsonVariant &j) : current_value(0), sensor_type("ADC") {
         r1 = j["R1"] | 9100.;
         r2 = j["R2"] | 47000.;
         offset = j["offset"] | 0.;
         factor = j["factor"] | 1.;
         mem = get_rtc_addr(j);
+
+        tags = j["tags"] | "";
     }
 
-    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1) {}
+    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1), sensor_type(), tags() {}
     ~Sensor_ADC() {}
 };
 

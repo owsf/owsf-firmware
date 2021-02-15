@@ -29,6 +29,8 @@ private:
     bool upload_request = false;
     bool done = false;
 
+    uint8_t num_sensors;
+
     void new_sensor(JsonVariant &);
 
 public:
@@ -37,7 +39,8 @@ public:
     bool upload_requested();
     bool sensors_done();
 
-    void publish(Point &);
+    void publish(InfluxDBClient *, String *, char *);
+    uint8_t get_num_sensors();
     void loop();
 
     explicit SensorManager(const JsonArray &);
@@ -49,6 +52,9 @@ class Sensor {
 public:
     virtual Sensor_State sample() = 0;
     virtual void publish(Point &) = 0;
+
+    virtual String &get_sensor_type() = 0;
+    virtual String &get_tags() = 0;
 
     Sensor() {}
     virtual ~Sensor() {};

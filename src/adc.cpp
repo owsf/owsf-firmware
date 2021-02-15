@@ -32,3 +32,11 @@ Sensor_State Sensor_ADC::sample() {
 
     return state;
 }
+
+String &Sensor_ADC::get_sensor_type() {
+    return sensor_type;
+}
+
+String &Sensor_ADC::get_tags() {
+    return tags;
+}
