@@ -32,11 +32,11 @@ Sensor_State Sensor_BME280::sample() {
     }
 
     ESP.rtcUserMemoryRead(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
-    if (threshold_helper_float(pres, &rtc_data.pres, 20.0))
+    if (threshold_helper_float(pres, &rtc_data.temp, threshold_pres))
         state = SENSOR_DONE_UPDATE;
-    if (threshold_helper_float(hum, &rtc_data.hum, 0.5))
+    if (threshold_helper_float(hum, &rtc_data.temp, threshold_hum))
         state = SENSOR_DONE_UPDATE;
-    if (threshold_helper_float(temp, &rtc_data.temp, 0.1))
+    if (threshold_helper_float(temp, &rtc_data.temp, threshold_temp))
         state = SENSOR_DONE_UPDATE;
     ESP.rtcUserMemoryWrite(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
 
@@ -60,6 +60,10 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
     initialized = false;
     sda = j["sda"] | 2;
     scl = j["scl"] | 14;
+
+    threshold_pres = j["threshold_pres"] | 20.0;
+    threshold_hum = j["threshold_hum"] | 0.5;
+    threshold_temp = j["threshold_temp"] | 0.1;
 
     mem = get_rtc_addr(j);
 
