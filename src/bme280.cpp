@@ -55,6 +55,8 @@ void Sensor_BME280::publish(Point &p) {
 Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
     temp(21.), hum(50.), pres(1080.), bme(), mem(-1), sensor_type("BME280")
 {
+    int rtcmem;
+
     Serial.println(F("Initializing BME280 "));
 
     initialized = false;
@@ -65,7 +67,8 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
     threshold_hum = j["threshold_hum"] | 0.5;
     threshold_temp = j["threshold_temp"] | 0.1;
 
-    mem = get_rtc_addr(j);
+    rtcmem = j["rtcmem_slot"] | -1;
+    mem = RTCMEM_SENSOR(rtcmem);
 
     tags = j["tags"] | "";
 
