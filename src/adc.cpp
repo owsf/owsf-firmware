@@ -25,10 +25,10 @@ Sensor_State Sensor_ADC::sample() {
         return state;
     }
 
-    ESP.rtcUserMemoryRead(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
+    ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
     if (threshold_helper_float(current_value, &rtc_data.current_value, threshold_voltage))
         state = SENSOR_DONE_UPDATE;
-    ESP.rtcUserMemoryWrite(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
+    ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
 
     return state;
 }
