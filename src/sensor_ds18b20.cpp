@@ -27,7 +27,7 @@ Sensor_State Sensor_DS18B20::sample() {
     }
 
     ESP.rtcUserMemoryRead(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
-    if (threshold_helper_float(temp, &rtc_data.temp, 0.1))
+    if (threshold_helper_float(temp, &rtc_data.temp, threshold_temp))
         state = SENSOR_DONE_UPDATE;
     ESP.rtcUserMemoryWrite(mem, (uint32_t*) &rtc_data, sizeof(rtc_data));
 
@@ -50,6 +50,8 @@ Sensor_DS18B20::Sensor_DS18B20(const JsonVariant &j) :
 
     initialized = false;
     pin = j["pin"] | 12;
+
+    threshold_temp = j["threshold_temp"] | 0.1;
 
     tags = j["tags"] | "";
 

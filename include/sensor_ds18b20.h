@@ -23,6 +23,7 @@ private:
     float temp;
     bool initialized;
     DS18B20 *ds;
+    float threshold_temp;
     int mem;
     ds18b20_rtc_data rtc_data;
     String sensor_type;
