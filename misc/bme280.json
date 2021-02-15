@@ -6,13 +6,15 @@
             "R2"   : 9100.0,
             "offset" : 0.0,
             "factor": 1.0,
-            "RTCMEM_SENSOR" : 0
+            "tags" : "supply_voltage",
+            "rtcmem_slot" : 0
         },
         {
             "type" : "BME280",
             "scl"  : 14,
             "sda"  : 2,
-            "RTCMEM_SENSOR" : 1
+            "tags" : "air",
+            "rtcmem_slot" : 1
         }
     ]
 }
