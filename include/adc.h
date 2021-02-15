@@ -21,6 +21,7 @@ private:
    float r2;
    float offset;
    float factor;
+   float threshold_voltage;
    int mem;
    struct adc_rtc_data rtc_data;
    String sensor_type;
@@ -39,6 +40,9 @@ public:
         r2 = j["R2"] | 47000.;
         offset = j["offset"] | 0.;
         factor = j["factor"] | 1.;
+
+        threshold_voltage = j["threshold_voltage"] | 0.01;
+
         mem = get_rtc_addr(j);
 
         tags = j["tags"] | "";
