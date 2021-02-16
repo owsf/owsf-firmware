@@ -39,8 +39,12 @@ def local_config(mapping_file, output_dir):
         j = json.load(f)
 
     for chip in j.keys():
-        with open(j[chip]["sensor_config"], "r") as f:
-            sensors = json.load(f)
+        sensors = {}
+        sensors["sensors"] = []
+        for config in j[chip]["sensor_config"]:
+            with open(config, "r") as f:
+                sensors_buf = json.load(f)
+                sensors["sensors"].append(sensors_buf["sensors"])
         jf = {
             "config_version" : j[chip]["config_version"],
             "device_name" : j[chip]["device_name"],
