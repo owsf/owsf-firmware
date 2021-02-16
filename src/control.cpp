@@ -190,6 +190,8 @@ void FirmwareControl::go_online() {
         opt.connectionReuse(true);
         opt.httpReadTimeout(10000);
         influx->setHTTPOptions(opt);
+	// NOTE: check batchSize with respect to num_sensors if there are memory
+	// consumption errors upcomming
         influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S).batchSize(num_sensors).bufferSize(2*num_sensors));
 
         if (influx->validateConnection()) {
