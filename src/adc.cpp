@@ -33,7 +33,7 @@ Sensor_State Sensor_ADC::sample() {
     return state;
 }
 
-String &Sensor_ADC::get_sensor_type() {
+const char *Sensor_ADC::get_sensor_type() {
     return sensor_type;
 }
 

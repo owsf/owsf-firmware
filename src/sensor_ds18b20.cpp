@@ -42,7 +42,7 @@ void Sensor_DS18B20::publish(Point &p) {
 }
 
 Sensor_DS18B20::Sensor_DS18B20(const JsonVariant &j) :
-    temp(21.), ds(nullptr), mem(-1), sensor_type("DS18B20")
+    temp(21.), ds(nullptr), mem(-1)
 {
     uint8_t pin;
     int rtcmem;
@@ -66,7 +66,7 @@ Sensor_DS18B20::Sensor_DS18B20(const JsonVariant &j) :
     initialized = true;
 }
 
-String &Sensor_DS18B20::get_sensor_type() {
+const char *Sensor_DS18B20::get_sensor_type() {
     return sensor_type;
 }
 
