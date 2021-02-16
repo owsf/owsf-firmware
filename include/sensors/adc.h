@@ -35,21 +35,7 @@ public:
     const char *get_sensor_type() override;
     String &get_tags() override;
 
-    explicit Sensor_ADC(const JsonVariant &j) : current_value(0) {
-        int rtcmem;
-
-        r1 = j["R1"] | 9100.;
-        r2 = j["R2"] | 47000.;
-        offset = j["offset"] | 0.;
-        factor = j["factor"] | 1.;
-
-        threshold_voltage = j["threshold_voltage"] | 0.01;
-
-        rtcmem = j["rtcmem_slot"] | -1;
-        mem = RTCMEM_SENSOR(rtcmem);
-
-        tags = j["tags"] | "";
-    }
+    explicit Sensor_ADC(const JsonVariant &);
 
     Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1), tags() {}
     ~Sensor_ADC() {}
