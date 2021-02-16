@@ -313,7 +313,7 @@ void FirmwareControl::loop() {
 
     if (sensor_manager->sensors_done()) {
         if (online) {
-            sensor_manager->publish(influx, &device_name, chip_id);
+            sensor_manager->publish(influx, &device_name, chip_id, VERSION);
             if (!influx->flushBuffer()) {
                 Serial.print("InfluxDB flush failed: ");
                 Serial.println(influx->getLastErrorMessage());

@@ -39,7 +39,7 @@ public:
     bool upload_requested();
     bool sensors_done();
 
-    void publish(InfluxDBClient *, String *, char *);
+    void publish(InfluxDBClient *, String *, char *, const char *);
     uint8_t get_num_sensors();
     void loop();
 
