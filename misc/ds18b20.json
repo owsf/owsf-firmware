@@ -1,0 +1,11 @@
+{
+    "sensors" : [
+        {
+            "type" : "DS18B20",
+            "tags" : "flow",
+            "pin"  : 12,
+            "threshold_temp" : 0.01,
+            "RTCMEM_SENSOR" : 3
+        }
+    ]
+}
