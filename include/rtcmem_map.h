@@ -6,7 +6,6 @@
  */
 #ifndef _RTCMEM_MAP_H_
 #define _RTCMEM_MAP_H_
-#include <ArduinoJson.h>
 
 #define RTCMEM_WSS RTC_USER_MEM
 #define RTCMEM_SENSOR_BASE (128 - 40)
