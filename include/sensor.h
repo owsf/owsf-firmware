@@ -72,18 +72,5 @@ public:
     ~SensorFactory() {};
 };
 
-inline bool threshold_helper_float(float val_new, float *val_old, float threshold)
-{
-    float val_diff;
-
-    val_diff = val_new - *val_old;
-    if(val_diff < 0)
-        val_diff *= -1;
-    if(val_diff >= threshold) {
-        *val_old = val_new;
-        return true;
-    } else {
-        return false;
-    }
-}
+bool threshold_helper_float(float, float *, float);
 #endif
