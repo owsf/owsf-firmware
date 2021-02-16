@@ -5,7 +5,7 @@
  *
  */
 
-#include "adc.h"
+#include "sensors/adc.h"
 
 void Sensor_ADC::publish(Point &p) {
     p.addField("voltage", current_value);

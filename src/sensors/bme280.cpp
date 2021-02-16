@@ -7,7 +7,7 @@
 
 #include <Wire.h>
 
-#include "bme280.h"
+#include "sensors/bme280.h"
 
 Sensor_State Sensor_BME280::sample() {
     if (state != SENSOR_NOT_INIT && state != SENSOR_INIT)

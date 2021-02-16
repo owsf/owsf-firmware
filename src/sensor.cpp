@@ -11,9 +11,9 @@
 #include "sensor.h"
 
 /* sensor specific includes */
-#include "adc.h"
-#include "bme280.h"
-#include "sensor_ds18b20.h"
+#include "sensors/adc.h"
+#include "sensors/bme280.h"
+#include "sensors/ds18b20.h"
 
 bool threshold_helper_float(float val_new, float *val_old, float threshold)
 {

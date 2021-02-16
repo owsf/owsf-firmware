@@ -6,7 +6,7 @@
  *
  */
 
-#include "sensor_ds18b20.h"
+#include "sensors/ds18b20.h"
 
 Sensor_State Sensor_DS18B20::sample() {
     if (state != SENSOR_NOT_INIT && state != SENSOR_INIT)
