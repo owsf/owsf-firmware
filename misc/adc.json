@@ -1,0 +1,13 @@
+{
+    "sensors" : [
+        {
+            "type" : "ADC",
+            "R1"   : 47000.0,
+            "R2"   : 9100.0,
+            "offset" : 0.0,
+            "factor": 1.0,
+            "tags" : "supply_voltage",
+            "rtcmem_slot" : 0
+        }
+    ]
+}
