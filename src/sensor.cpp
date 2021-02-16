@@ -15,6 +15,21 @@
 #include "bme280.h"
 #include "sensor_ds18b20.h"
 
+bool threshold_helper_float(float val_new, float *val_old, float threshold)
+{
+    float val_diff;
+
+    val_diff = val_new - *val_old;
+    if(val_diff < 0)
+        val_diff *= -1;
+    if(val_diff >= threshold) {
+        *val_old = val_new;
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void SensorManager::register_sensor_class(const char *type, SensorFactory *sf) {
     if (!type || !sf) {
         Serial.printf("register_sensor_class: invalid parameters %p %p\n", type, sf);
