@@ -9,7 +9,6 @@
 #include <time.h>
 
 #include "sensor.h"
-#include "version.h"
 
 /* sensor specific includes */
 #include "adc.h"
@@ -95,12 +94,12 @@ void SensorManager::loop() {
 }
 
 void SensorManager::publish(InfluxDBClient *c, String *device_name,
-                            char *chip_id) {
+                            char *chip_id, const char *version) {
     for (Sensor *s : sensors) {
         Point p("sensor_data");
         p.addTag("device", *device_name);
         p.addTag("chip_id", chip_id);
-        p.addTag("firmware_version", VERSION);
+        p.addTag("firmware_version", version);
         p.setTime(time(nullptr));
         p.addTag("sensor_type", s->get_sensor_type());
         if (s->get_tags() != "")
