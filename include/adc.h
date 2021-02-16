@@ -24,7 +24,7 @@ private:
    float threshold_voltage;
    int mem;
    struct adc_rtc_data rtc_data;
-   String sensor_type;
+   static constexpr const char *sensor_type = "ADC";
    String tags;
    Sensor_State state = SENSOR_INIT;
 
@@ -32,10 +32,10 @@ public:
     Sensor_State sample() override;
     void publish(Point &) override;
 
-    String &get_sensor_type() override;
+    const char *get_sensor_type() override;
     String &get_tags() override;
 
-    explicit Sensor_ADC(const JsonVariant &j) : current_value(0), sensor_type("ADC") {
+    explicit Sensor_ADC(const JsonVariant &j) : current_value(0) {
         int rtcmem;
 
         r1 = j["R1"] | 9100.;
@@ -51,7 +51,7 @@ public:
         tags = j["tags"] | "";
     }
 
-    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1), sensor_type(), tags() {}
+    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1), tags() {}
     ~Sensor_ADC() {}
 };
 

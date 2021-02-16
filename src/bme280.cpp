@@ -53,7 +53,7 @@ void Sensor_BME280::publish(Point &p) {
 }
 
 Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
-    temp(21.), hum(50.), pres(1080.), bme(), mem(-1), sensor_type("BME280")
+    temp(21.), hum(50.), pres(1080.), bme(), mem(-1)
 {
     int rtcmem;
 
@@ -85,7 +85,7 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
     initialized = true;
 }
 
-String &Sensor_BME280::get_sensor_type() {
+const char *Sensor_BME280::get_sensor_type() {
     return sensor_type;
 }
 

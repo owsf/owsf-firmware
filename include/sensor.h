@@ -53,7 +53,7 @@ public:
     virtual Sensor_State sample() = 0;
     virtual void publish(Point &) = 0;
 
-    virtual String &get_sensor_type() = 0;
+    virtual const char *get_sensor_type() = 0;
     virtual String &get_tags() = 0;
 
     Sensor() {}

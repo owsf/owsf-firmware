@@ -26,7 +26,7 @@ private:
     float threshold_temp;
     int mem;
     ds18b20_rtc_data rtc_data;
-    String sensor_type;
+    static constexpr const char *sensor_type = "DS18B20";
     String tags;
     Sensor_State state = SENSOR_NOT_INIT;
 
@@ -34,12 +34,12 @@ public:
     Sensor_State sample() override;
     void publish(Point &) override;
 
-    String &get_sensor_type() override;
+    const char *get_sensor_type() override;
     String &get_tags() override;
 
     explicit Sensor_DS18B20(const JsonVariant &);
     Sensor_DS18B20() : temp(21.), initialized(false), ds(nullptr), mem(-1),
-    sensor_type(), tags() {}
+    tags() {}
     ~Sensor_DS18B20() {}
 };
 
