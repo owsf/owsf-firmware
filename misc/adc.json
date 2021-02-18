@@ -7,6 +7,7 @@
             "offset" : 0.0,
             "factor": 1.0,
             "tags" : "supply_voltage",
+            "threshold_voltage" : 0.05,
             "rtcmem_slot" : 0
         }
     ]

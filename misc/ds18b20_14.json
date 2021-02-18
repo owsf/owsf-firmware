@@ -2,10 +2,10 @@
     "sensors" : [
         {
             "type" : "DS18B20",
-            "tags" : "return_flow",
             "pin"  : 14,
-            "threshold_temp" : 0.01,
-            "RTCMEM_SENSOR" : 4
+            "tags" : "return_flow",
+            "threshold_temp": 0.50,
+            "rtcmem_slot" : 4
         }
     ]
 }
