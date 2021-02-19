@@ -7,4 +7,4 @@ and processing.
 
 The sensors can be specified in a DTS like fashion.
 
-The firmware works in concert with the companion control server.
+The firmware works in concert with the companion control server [IOTA](https://github.com/junkdna/esp8266-control-server).
