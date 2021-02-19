@@ -110,18 +110,18 @@ void SensorManager::loop() {
 
 void SensorManager::publish(InfluxDBClient *c, String *device_name,
                             char *chip_id, const char *version) {
-    for (Sensor *s : sensors) {
-        Point p("sensor_data");
-        p.addTag("device", *device_name);
-        p.addTag("chip_id", chip_id);
-        p.addTag("firmware_version", version);
-        p.setTime(time(nullptr));
-        p.addTag("sensor_type", s->get_sensor_type());
-        if (s->get_tags() != "")
-            p.addTag("sensor_tags", s->get_tags());
-        s->publish(p);
-        Serial.println(c->pointToLineProtocol(p));
-        c->writePoint(p);
+    for (Sensor *sensor : sensors) {
+        Point point("sensor_data");
+        point.addTag("device", *device_name);
+        point.addTag("chip_id", chip_id);
+        point.addTag("firmware_version", version);
+        point.setTime(time(nullptr));
+        point.addTag("sensor_type", sensor->get_sensor_type());
+        if (sensor->get_tags() != "")
+            point.addTag("sensor_tags", sensor->get_tags());
+        sensor->publish(point);
+        Serial.println(c->pointToLineProtocol(point));
+        c->writePoint(point);
     }
 }
 
