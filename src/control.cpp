@@ -208,6 +208,10 @@ void FirmwareControl::deep_sleep() {
     Serial.print(F(" -> deep sleep for "));
     Serial.println(sleep_time_s);
 
+    ++reboot_count;
+    ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
+                           sizeof(reboot_count));
+
     if (online)
         WiFi.mode(WIFI_SHUTDOWN, wss);
 
@@ -255,6 +259,7 @@ void FirmwareControl::read_config() {
         file.close();
 
         sleep_time_s = doc["sleep_time_s"] | 60;
+        ota_check_after = doc["ota_check_after"] | 10000;
         device_name = doc["device_name"] | chip_id;
         config_version = doc["config_version"] | 0;
 
@@ -287,11 +292,23 @@ void FirmwareControl::setup() {
     read_global_config();
     read_config();
 
-    if (ESP.getResetReason() == F("Power On"))
-        ota_request = true;
+    ESP.rtcUserMemoryRead(RTCMEM_REBOOT_COUNTER, &reboot_count,
+                          sizeof(reboot_count));
 
-    if (ESP.getResetReason() == F("External System"))
+    if (ESP.getResetReason() == F("Power On")) {
         ota_request = true;
+        reboot_count = 0;
+    }
+
+    if (ESP.getResetReason() == F("External System")) {
+        ota_request = true;
+        reboot_count = 0;
+    }
+
+    if (reboot_count > ota_check_after) {
+        ota_request = true;
+        reboot_count = 0;
+    }
 }
 
 void FirmwareControl::loop() {
@@ -301,6 +318,8 @@ void FirmwareControl::loop() {
 
     if (online && ota_request) {
         OTA();
+        ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
+                               sizeof(reboot_count));
         ESP.reset();
     }
 
