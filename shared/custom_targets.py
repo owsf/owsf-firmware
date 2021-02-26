@@ -1,3 +1,8 @@
+#
+# (C) Copyright 2021 Dominik Laton
+#
+# SPDX-License-Identifier: MIT
+#
 Import("env")
 
 if env['PIOENV'] == "release":
