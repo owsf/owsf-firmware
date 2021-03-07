@@ -12,6 +12,7 @@ import nacl.secret
 import nacl.utils
 import os
 import re
+import requests
 import sys
 
 def global_config(data_dir, output_dir):
@@ -38,6 +39,9 @@ def local_config(mapping_file, output_dir):
     with open(mapping_file, "r") as f:
         j = json.load(f)
 
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+
     for chip in j.keys():
         sensors = {}
         sensors["sensors"] = []
@@ -56,28 +60,33 @@ def local_config(mapping_file, output_dir):
             f.write(json.dumps(jf, sort_keys=True, indent=4))
 
 
-def firmware(src_dir, output_dir):
-    version = check_output(["git", "-C", src_dir,
-                            "describe", "--always", "--dirty"],
-                           shell=False).strip().decode()
-    filename = "firmware.sig.%s" % (version)
-    fwjs = {
-        "version" : version,
-        "file" : filename,
-    }
+def firmware(output_dir):
+    fw_dl_link = None
 
-    with open(os.path.join(output_dir, "firmware.json"), "w") as f:
-        f.write(json.dumps(fwjs, sort_keys=True, indent=4))
+    r = requests.get("https://api.github.com/repos/owsf/owsf-firmware/releases/latest")
+    if r.status_code != 200:
+        sys.exit(-1)
 
-    ffile = "firmware.sig"
-    m = re.match(r"(.*?)(-g[0-9a-f]{7})?(-dirty)?$", version)
-    if m and len(m.groups("")[2]) == 0:
-       ffile = "firmware_%s.sig" % m.groups()[0].replace("-", ".")
+    response = r.json()
+    for asset in response["assets"]:
+        if "firmware.sig" in asset["browser_download_url"]:
+            fw_dl_link = asset["browser_download_url"]
 
-    with open(os.path.join(src_dir, ".pio", "build", "release", ffile),
-              "rb") as infile:
-        with open(os.path.join(output_dir, filename), "wb") as outfile:
-            outfile.write(infile.read())
+    if fw_dl_link == None:
+        sys.exit(-1)
+
+    r = requests.get(fw_dl_link)
+    if r.status_code != 200:
+        sys.exit(-1)
+
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+
+    with open(os.path.join(output_dir, "firmware.sig"), "w+b") as f:
+        f.write(r.content)
+
+    with open(os.path.join(output_dir, "fw_version"), "w") as f:
+        f.write(response["tag_name"])
 
 
 if __name__ == "__main__":
@@ -89,4 +98,4 @@ if __name__ == "__main__":
 
     global_config(args.data_dir, args.output_dir)
     local_config(args.mapping_file, args.output_dir)
-    firmware(os.path.join(os.path.dirname(sys.argv[0]), ".."), args.output_dir)
+    firmware(os.path.join(args.output_dir))
