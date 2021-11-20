@@ -182,6 +182,7 @@ void FirmwareControl::go_online() {
         set_clock();
     } else {
         Serial.println(F("Failed to go online"));
+        ESP.deepSleepInstant(1E6, RF_DISABLED);
         return;
     }
 
@@ -222,7 +223,7 @@ void FirmwareControl::deep_sleep() {
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
                            sizeof(reboot_count));
 
-    ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
+    ESP.deepSleepInstant(sleep_time_s * 1E6, RF_DISABLED);
 }
 
 void FirmwareControl::read_global_config() {
