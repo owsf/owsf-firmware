@@ -60,9 +60,15 @@ def firmware(src_dir, output_dir):
     version = check_output(["git", "-C", src_dir,
                             "describe", "--always", "--dirty"],
                            shell=False).strip().decode()
+
+    m = re.match(r"(.*?)(-g[0-9a-f]{7})?(-dirty)?$", version)
+
     filename = "firmware.sig.%s" % (version)
+    if m and len(m.groups("")[2]) == 0:
+       filename = "firmware.sig.%s" % m.groups()[0].replace("-", ".")
+
     fwjs = {
-        "version" : version,
+        "version" : version if not m else m.groups()[0].replace("-","."),
         "file" : filename,
     }
 
@@ -70,12 +76,11 @@ def firmware(src_dir, output_dir):
         f.write(json.dumps(fwjs, sort_keys=True, indent=4))
 
     ffile = "firmware.sig"
-    m = re.match(r"(.*?)(-g[0-9a-f]{7})?(-dirty)?$", version)
     if m and len(m.groups("")[2]) == 0:
        ffile = "firmware_%s.sig" % m.groups()[0].replace("-", ".")
 
-    with open(os.path.join(src_dir, ".pio", "build", "release", ffile),
-              "rb") as infile:
+    ffile_path = os.path.join(src_dir, ".pio", "build", "release", ffile)
+    with open(ffile_path, "rb") as infile:
         with open(os.path.join(output_dir, filename), "wb") as outfile:
             outfile.write(infile.read())
 
