@@ -15,6 +15,7 @@
 /* enable ADC and configure for external circuitry */
 ADC_MODE(ADC_TOUT);
 
+#if 0
 /* From
  * ESP8266WiFi/examples/EarlyDisableWiFi/EarlyDisableWiFi.ino
  */
@@ -27,6 +28,7 @@ void preinit() {
      */
     ESP8266WiFiClass::preinitWiFiOff();
 }
+#endif
 
 FirmwareControl ctrl;
 
