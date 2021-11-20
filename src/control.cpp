@@ -151,16 +151,34 @@ void FirmwareControl::OTA() {
     update_config("global_config");
     update_config("local_config");
 
+    ctrl_url += "/firmware";
     Updater upd;
-    upd.update(*https, ctrl_url + "/firmware", VERSION);
+    upd.update(*https, ctrl_url, VERSION);
 }
 
 void FirmwareControl::go_online() {
-    Serial.println(("going online ..."));
-    WiFi.forceSleepBegin();
     delay(1);
-    WiFi.forceSleepWake();
-    delay(1);
+
+    ESP.rtcUserMemoryRead(RTCMEM_WSS, reinterpret_cast<uint32_t *>(&wifi_state),
+                          sizeof(wifi_state));
+
+
+    if (!WiFi.resumeFromShutdown(wifi_state) || (WiFi.waitForConnectResult(10000) != WL_CONNECTED)) {
+        Serial.println("Cannot resume WiFi connection, connecting via begin...");
+        WiFi.persistent(false);
+
+        if (!WiFi.mode(WIFI_STA) || !WiFi.begin(wifi_ssid, wifi_pass) || (WiFi.waitForConnectResult(10000) != WL_CONNECTED)) {
+            WiFi.mode(WIFI_OFF);
+            Serial.println("Cannot connect!");
+            Serial.flush();
+        } else {
+            this->online = true;
+        }
+    } else {
+        this->online = true;
+    }
+
+#if 0
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid, wifi_pass);
 
@@ -172,6 +190,7 @@ void FirmwareControl::go_online() {
         }
         delay(100);
     }
+#endif
 
     if (online) {
         set_clock();
@@ -208,12 +227,14 @@ void FirmwareControl::deep_sleep() {
     Serial.print(F(" -> deep sleep for "));
     Serial.println(sleep_time_s);
 
+    if (online) {
+        WiFi.shutdown(wifi_state);
+        ESP.rtcUserMemoryWrite(RTCMEM_WSS, reinterpret_cast<uint32_t *>(&wifi_state), sizeof(wifi_state));
+    }
+
     ++reboot_count;
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
                            sizeof(reboot_count));
-
-    if (online)
-        WiFi.mode(WIFI_SHUTDOWN, wss);
 
     ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
 }
@@ -279,8 +300,6 @@ void FirmwareControl::setup() {
     Serial.print(F("  Reset Reason: "));
     Serial.println(ESP.getResetReason());
     LittleFS.begin();
-
-    wss = (WiFiState *)RTCMEM_WSS;
 
     int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"),
                                             PSTR("/certs.ar"));
@@ -350,6 +369,6 @@ void FirmwareControl::loop() {
 
 FirmwareControl::FirmwareControl() :
     influx_url(nullptr), influx_org(nullptr), influx_bucket(nullptr), influx_token(nullptr),
-    sleep_time_s(600), go_online_request(false), online(false), wss(nullptr),
+    sleep_time_s(600), go_online_request(false), online(false),
     sensor_manager(nullptr), influx(nullptr) {
 }

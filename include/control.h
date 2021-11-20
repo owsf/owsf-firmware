@@ -8,12 +8,14 @@
 
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
+#include <include/WiFiState.h>
 #include <InfluxDbClient.h>
 
 #include "sensor.h"
 
 class FirmwareControl {
 private:
+    WiFiState wifi_state;
     String wifi_ssid;
     String wifi_pass;
 
@@ -44,8 +46,6 @@ private:
     WiFiClient *wifi_client;
     BearSSL::X509List *_cert = nullptr;
     HTTPClient *https = nullptr;
-
-    WiFiState *wss = nullptr;
 
     SensorManager *sensor_manager = nullptr;
     InfluxDBClient *influx = nullptr;
