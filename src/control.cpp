@@ -178,20 +178,6 @@ void FirmwareControl::go_online() {
         this->online = true;
     }
 
-#if 0
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(wifi_ssid, wifi_pass);
-
-    for (int i = 0; i < 1000; i++) {
-        /* work around problems of WiFi status not always showing WL_CONNECTED */
-        if ((WiFi.status() == WL_CONNECTED) || WiFi.localIP().isSet()) {
-            this->online = true;
-            break;
-        }
-        delay(100);
-    }
-#endif
-
     if (online) {
         set_clock();
     } else {
