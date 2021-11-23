@@ -157,25 +157,40 @@ void FirmwareControl::OTA() {
 }
 
 void FirmwareControl::go_online() {
+    bool error = false;
     delay(1);
 
-    ESP.rtcUserMemoryRead(RTCMEM_WSS, reinterpret_cast<uint32_t *>(&wifi_state),
-                          sizeof(wifi_state));
-
-
-    if (!WiFi.resumeFromShutdown(wifi_state) || (WiFi.waitForConnectResult(10000) != WL_CONNECTED)) {
-        Serial.println("Cannot resume WiFi connection, connecting via begin...");
+    if ((WiFi.status() == WL_CONNECTED) || WiFi.localIP().isSet()) {
+        this->online = true;
+    } else {
         WiFi.persistent(false);
 
-        if (!WiFi.mode(WIFI_STA) || !WiFi.begin(wifi_ssid, wifi_pass) || (WiFi.waitForConnectResult(10000) != WL_CONNECTED)) {
+        if (!WiFi.mode(WIFI_STA)) {
             WiFi.mode(WIFI_OFF);
+            Serial.println("Cannot WIFI_STA!");
+            Serial.flush();
+            error = true;
+        }
+
+        if (!error && !WiFi.begin(wifi_ssid, wifi_pass)) {
+            Serial.println("Cannot begin!");
+            Serial.flush();
+            error = true;
+        }
+
+        if (!error && WiFi.waitForConnectResult(10000) != WL_CONNECTED) {
             Serial.println("Cannot connect!");
             Serial.flush();
-        } else {
-            this->online = true;
+            error = true;
         }
-    } else {
-        this->online = true;
+
+        if (!error && !WiFi.localIP().isSet()) {
+            Serial.println("Cannot localIP!");
+            Serial.flush();
+            error = true;
+        }
+
+        this->online = true && !error;
     }
 
     if (online) {
@@ -213,11 +228,6 @@ void FirmwareControl::go_online() {
 void FirmwareControl::deep_sleep() {
     Serial.print(F(" -> deep sleep for "));
     Serial.println(sleep_time_s);
-
-    if (online) {
-        WiFi.shutdown(wifi_state);
-        ESP.rtcUserMemoryWrite(RTCMEM_WSS, reinterpret_cast<uint32_t *>(&wifi_state), sizeof(wifi_state));
-    }
 
     ++reboot_count;
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,

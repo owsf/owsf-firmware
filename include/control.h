@@ -15,7 +15,6 @@
 
 class FirmwareControl {
 private:
-    WiFiState wifi_state;
     String wifi_ssid;
     String wifi_pass;
 
