@@ -163,6 +163,11 @@ void FirmwareControl::go_online() {
     if ((WiFi.status() == WL_CONNECTED) || WiFi.localIP().isSet()) {
         this->online = true;
     } else {
+        WiFi.forceSleepBegin();
+        delay(1);
+        WiFi.forceSleepWake();
+        delay(1);
+
         WiFi.persistent(false);
 
         if (!WiFi.mode(WIFI_STA)) {
@@ -178,8 +183,9 @@ void FirmwareControl::go_online() {
             error = true;
         }
 
-        if (!error && WiFi.waitForConnectResult(10000) != WL_CONNECTED) {
-            Serial.println("Cannot connect!");
+        int8_t status = WiFi.waitForConnectResult(10000);
+        if (!error && status != WL_CONNECTED) {
+            Serial.printf("Cannot connect (%d)!", status);
             Serial.flush();
             error = true;
         }
@@ -197,8 +203,8 @@ void FirmwareControl::go_online() {
         set_clock();
     } else {
         Serial.println(F("Failed to go online"));
-        ESP.deepSleepInstant(1E6, RF_DISABLED);
-        return;
+        ESP.deepSleepInstant(1E6);
+        delay(100);
     }
 
     if (!ota_request) {
@@ -233,7 +239,11 @@ void FirmwareControl::deep_sleep() {
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
                            sizeof(reboot_count));
 
-    ESP.deepSleepInstant(sleep_time_s * 1E6, RF_DISABLED);
+    WiFi.disconnect(true);
+    delay(1);
+
+    ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
+    delay(100);
 }
 
 void FirmwareControl::read_global_config() {
