@@ -77,7 +77,7 @@ def firmware(src_dir, output_dir):
 
     ffile = "firmware.sig"
     if m and len(m.groups("")[2]) == 0:
-       ffile = "firmware_%s.sig" % m.groups()[0].replace("-", ".")
+       ffile = "firmware.%s.sig" % m.groups()[0].replace("-", ".")
 
     ffile_path = os.path.join(src_dir, ".pio", "build", "release", ffile)
     with open(ffile_path, "rb") as infile:
