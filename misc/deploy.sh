@@ -11,4 +11,4 @@ curl -v -H 'Content-Type: application/json' -H "X-auth-token: $IOTA_TOKEN" \
 
 curl -v -H "Content-Type: text/plain" -H "X-auth-token: $IOTA_TOKEN" \
     -H "X-firmware-version: $(cat server_data/firmware.json | jq -M -r .version)" \
-    -X PUT -d "@server_data/$(cat server_data/firmware.json | jq -M -r .file)" $ITOA_URL/api/v1/deploy/firmware
+    -X PUT -d "@server_data/$(cat server_data/firmware.json | jq -M -r .file)" $IOTA_URL/api/v1/deploy/firmware
