@@ -355,8 +355,10 @@ void FirmwareControl::loop() {
     if (!sensor_manager->sensors_done())
         sensor_manager->loop();
 
-    if (sensor_manager->sensors_done())
+    if (sensor_manager->sensors_done()) {
         go_online_request = sensor_manager->upload_requested();
+        return;
+    }
 
     if (sensor_manager->sensors_done()) {
         if (online) {
