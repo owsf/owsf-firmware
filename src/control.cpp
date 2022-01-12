@@ -309,19 +309,6 @@ void FirmwareControl::setup() {
     Serial.println(ESP.getResetReason());
     LittleFS.begin();
 
-    int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"),
-                                            PSTR("/certs.ar"));
-    Serial.print(F("Number of CA certs read: "));
-    Serial.println(numCerts);
-    if (numCerts == 0)
-        Serial.printf("No certs found\n");
-
-    read_global_config();
-    read_config();
-
-    ESP.rtcUserMemoryRead(RTCMEM_REBOOT_COUNTER, &reboot_count,
-                          sizeof(reboot_count));
-
     if (ESP.getResetReason() == F("Power On")) {
         ota_request = true;
         reboot_count = 0;
@@ -332,6 +319,8 @@ void FirmwareControl::setup() {
         reboot_count = 0;
     }
 
+    ESP.rtcUserMemoryRead(RTCMEM_REBOOT_COUNTER, &reboot_count,
+                          sizeof(reboot_count));
     if (reboot_count > ota_check_after) {
         ota_request = true;
         reboot_count = 0;
@@ -341,6 +330,16 @@ void FirmwareControl::setup() {
     ESP.rtcUserMemoryRead(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
     if (tmp != 0)
         go_online_request = true;
+
+    int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"),
+                                            PSTR("/certs.ar"));
+    Serial.print(F("Number of CA certs read: "));
+    Serial.println(numCerts);
+    if (numCerts == 0)
+        Serial.printf("No certs found\n");
+
+    read_global_config();
+    read_config();
 }
 
 void FirmwareControl::loop() {
