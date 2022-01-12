@@ -156,6 +156,38 @@ void FirmwareControl::OTA() {
     upd.update(*https, ctrl_url, VERSION);
 }
 
+void FirmwareControl::publish_sensor_data() {
+    uint8_t num_sensors;
+
+    num_sensors = sensor_manager->get_num_sensors();
+    influx = new InfluxDBClient(influx_url, influx_org, influx_bucket,
+                                influx_token, influxCA);
+    HTTPOptions opt;
+    opt.connectionReuse(true);
+    opt.httpReadTimeout(10000);
+    influx->setHTTPOptions(opt);
+    // NOTE: check batchSize with respect to num_sensors if there are memory
+    // consumption errors upcomming
+    influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S).batchSize(num_sensors).bufferSize(2*num_sensors));
+
+    if (influx->validateConnection()) {
+        Serial.print("Connected to InfluxDB: ");
+        Serial.println(influx->getServerUrl());
+    } else {
+        Serial.print("InfluxDB connection failed: ");
+        Serial.println(influx->getLastErrorMessage());
+    }
+
+    sensor_manager->publish(influx, &device_name, chip_id, VERSION);
+
+    if (!influx->flushBuffer()) {
+        Serial.print("InfluxDB flush failed: ");
+        Serial.println(influx->getLastErrorMessage());
+        Serial.print("Full buffer: ");
+        Serial.println(influx->isBufferFull() ? "Yes" : "No");
+    }
+}
+
 void FirmwareControl::go_online() {
     bool error = false;
     delay(1);
@@ -199,35 +231,15 @@ void FirmwareControl::go_online() {
         this->online = true && !error;
     }
 
-    if (online) {
-        set_clock();
-    } else {
+    if (!online) {
         Serial.println(F("Failed to go online"));
         ESP.deepSleepInstant(1E6);
         delay(100);
     }
 
+    set_clock();
+
     if (!ota_request) {
-        uint8_t num_sensors;
-
-        num_sensors = sensor_manager->get_num_sensors();
-        influx = new InfluxDBClient(influx_url, influx_org, influx_bucket,
-                                    influx_token, influxCA);
-        HTTPOptions opt;
-        opt.connectionReuse(true);
-        opt.httpReadTimeout(10000);
-        influx->setHTTPOptions(opt);
-        // NOTE: check batchSize with respect to num_sensors if there are memory
-        // consumption errors upcomming
-        influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S).batchSize(num_sensors).bufferSize(2*num_sensors));
-
-        if (influx->validateConnection()) {
-            Serial.print("Connected to InfluxDB: ");
-            Serial.println(influx->getServerUrl());
-        } else {
-            Serial.print("InfluxDB connection failed: ");
-            Serial.println(influx->getLastErrorMessage());
-        }
     }
 }
 
@@ -352,27 +364,17 @@ void FirmwareControl::loop() {
     if (ota_request)
         return;
 
-    if (!sensor_manager->sensors_done())
-        sensor_manager->loop();
-
     if (sensor_manager->sensors_done()) {
         go_online_request = sensor_manager->upload_requested();
-        return;
-    }
 
-    if (sensor_manager->sensors_done()) {
         if (online) {
-            sensor_manager->publish(influx, &device_name, chip_id, VERSION);
-            if (!influx->flushBuffer()) {
-                Serial.print("InfluxDB flush failed: ");
-                Serial.println(influx->getLastErrorMessage());
-                Serial.print("Full buffer: ");
-                Serial.println(influx->isBufferFull() ? "Yes" : "No");
-            }
+            publish_sensor_data();
             deep_sleep();
-        } else if (!sensor_manager->upload_requested()) {
+        } else if (!go_online_request) {
             deep_sleep();
         }
+    } else {
+        sensor_manager->loop();
     }
 }
 
