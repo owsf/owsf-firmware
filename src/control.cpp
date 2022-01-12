@@ -190,57 +190,49 @@ void FirmwareControl::publish_sensor_data() {
 
 void FirmwareControl::go_online() {
     bool error = false;
-    delay(1);
 
-    if ((WiFi.status() == WL_CONNECTED) || WiFi.localIP().isSet()) {
-        this->online = true;
-    } else {
-        WiFi.forceSleepBegin();
-        delay(1);
-        WiFi.forceSleepWake();
-        delay(1);
+    uint32_t tmp = 0;
+    ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
 
-        WiFi.persistent(false);
-
-        if (!WiFi.mode(WIFI_STA)) {
-            WiFi.mode(WIFI_OFF);
-            Serial.println("Cannot WIFI_STA!");
-            Serial.flush();
-            error = true;
-        }
-
-        if (!error && !WiFi.begin(wifi_ssid, wifi_pass)) {
-            Serial.println("Cannot begin!");
-            Serial.flush();
-            error = true;
-        }
-
-        int8_t status = WiFi.waitForConnectResult(10000);
-        if (!error && status != WL_CONNECTED) {
-            Serial.printf("Cannot connect (%d)!", status);
-            Serial.flush();
-            error = true;
-        }
-
-        if (!error && !WiFi.localIP().isSet()) {
-            Serial.println("Cannot localIP!");
-            Serial.flush();
-            error = true;
-        }
-
-        this->online = true && !error;
+    WiFi.persistent(false);
+    if (!WiFi.mode(WIFI_STA)) {
+        WiFi.mode(WIFI_OFF);
+        Serial.println("Cannot WIFI_STA!");
+        Serial.flush();
+        error = true;
     }
 
+    if (!error && !WiFi.begin(wifi_ssid, wifi_pass)) {
+        Serial.println("Cannot begin!");
+        Serial.flush();
+        error = true;
+    }
+
+    int8_t status = WiFi.waitForConnectResult(10000);
+    if (!error && status != WL_CONNECTED) {
+        Serial.printf("Cannot connect (%d)!", status);
+        Serial.flush();
+        error = true;
+    }
+
+    if (!error && !WiFi.localIP().isSet()) {
+        Serial.println("Cannot localIP!");
+        Serial.flush();
+        error = true;
+    }
+
+    this->online = !error;
+
     if (!online) {
+        tmp = 1;
+        ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
         Serial.println(F("Failed to go online"));
-        ESP.deepSleepInstant(1E6);
+        Serial.flush();
+        ESP.deepSleepInstant(1E6, WAKE_RF_DEFAULT);
         delay(100);
     }
 
     set_clock();
-
-    if (!ota_request) {
-    }
 }
 
 void FirmwareControl::deep_sleep() {
@@ -347,6 +339,11 @@ void FirmwareControl::setup() {
         ota_request = true;
         reboot_count = 0;
     }
+
+    uint32_t tmp;
+    ESP.rtcUserMemoryRead(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
+    if (tmp != 0)
+        go_online_request = true;
 }
 
 void FirmwareControl::loop() {
