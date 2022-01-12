@@ -50,6 +50,7 @@ private:
     InfluxDBClient *influx = nullptr;
 
 protected:
+    void publish_sensor_data();
     void read_global_config();
     void read_config();
     void OTA();
