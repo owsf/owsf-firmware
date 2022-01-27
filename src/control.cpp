@@ -194,6 +194,9 @@ void FirmwareControl::go_online() {
     uint32_t tmp = 0;
     ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
 
+    if (!rf_enabled)
+        goto sleep;
+
     WiFi.persistent(false);
     if (!WiFi.mode(WIFI_STA)) {
         WiFi.mode(WIFI_OFF);
@@ -224,6 +227,7 @@ void FirmwareControl::go_online() {
     this->online = !error;
 
     if (!online) {
+sleep:
         tmp = 1;
         ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
         Serial.println(F("Failed to go online"));
@@ -328,8 +332,10 @@ void FirmwareControl::setup() {
 
     uint32_t tmp;
     ESP.rtcUserMemoryRead(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
-    if (tmp != 0)
+    if (tmp != 0) {
         go_online_request = true;
+        rf_enabled = true;
+    }
 
     int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"),
                                             PSTR("/certs.ar"));
@@ -372,7 +378,8 @@ void FirmwareControl::loop() {
 }
 
 FirmwareControl::FirmwareControl() :
-    influx_url(nullptr), influx_org(nullptr), influx_bucket(nullptr), influx_token(nullptr),
-    sleep_time_s(600), go_online_request(false), online(false),
-    sensor_manager(nullptr), influx(nullptr) {
+    influx_url(nullptr), influx_org(nullptr), influx_bucket(nullptr),
+    influx_token(nullptr), sleep_time_s(600), go_online_request(false),
+    online(false), sensor_manager(nullptr), influx(nullptr),
+    ota_request(false), rf_enabled(false) {
 }
