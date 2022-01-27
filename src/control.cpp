@@ -353,9 +353,8 @@ void FirmwareControl::setup() {
 }
 
 void FirmwareControl::loop() {
-    if (!online && (go_online_request || ota_request)) {
+    if (!online && (go_online_request || ota_request))
         go_online();
-    }
 
     if (online && ota_request) {
         OTA();
