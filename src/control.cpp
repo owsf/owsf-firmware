@@ -247,7 +247,11 @@ void FirmwareControl::deep_sleep() {
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
                            sizeof(reboot_count));
 
+    if (online)
+        WiFi.mode(WIFI_SHUTDOWN);
+
     ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
+
     delay(100);
 }
 
