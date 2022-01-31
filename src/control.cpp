@@ -11,6 +11,7 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 #include <FS.h>
+#include <IPAddress.h>
 #include <LittleFS.h>
 #include <time.h>
 
@@ -23,6 +24,58 @@
 
 #define TZ_INFO "CET-1CEST,M3.5.0,M10.5.0/3"
 
+
+NetCfg::NetCfg(bool load) {
+    if (!load)
+        return;
+
+    uint32_t mem;
+    ESP.rtcUserMemoryRead(RTCMEM_NET_CFG_MAGIC, &mem, sizeof(mem));
+    if (mem != 0xdeadbeef)
+        return;
+
+    ok = true;
+    ESP.rtcUserMemoryRead(RTCMEM_NET_CFG_IP,    &this->ip_addr, sizeof(this->ip_addr));
+    ESP.rtcUserMemoryRead(RTCMEM_NET_CFG_MASK,  &this->netmask, sizeof(this->netmask));
+    ESP.rtcUserMemoryRead(RTCMEM_NET_CFG_GW,    &this->gateway, sizeof(this->gateway));
+    ESP.rtcUserMemoryRead(RTCMEM_NET_CFG_DNS,   &this->namesrv, sizeof(this->namesrv));
+    ESP.rtcUserMemoryRead(RTCMEM_NET_CFG_BSSID, (uint32_t *)&this->bssid, 8);
+    ESP.rtcUserMemoryRead(RTCMEM_NET_CFG_CHAN,  (uint32_t *)&this->chan, 4);
+}
+
+void NetCfg::save() {
+    ok = true;
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_IP,    &this->ip_addr, sizeof(this->ip_addr));
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_MASK,  &this->netmask, sizeof(this->netmask));
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_GW,    &this->gateway, sizeof(this->gateway));
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_DNS,   &this->namesrv, sizeof(this->namesrv));
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_BSSID, (uint32_t *)&this->bssid, 8);
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_CHAN,  (uint32_t *)&this->chan, 4);
+
+    uint32_t mem = 0xdeadbeef;
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_MAGIC, &mem, sizeof(mem));
+}
+
+void NetCfg::clear() {
+    uint32_t mem = 0xffffffff;
+    ESP.rtcUserMemoryWrite(RTCMEM_NET_CFG_MAGIC, &mem, sizeof(mem));
+}
+
+void NetCfg::update() {
+    struct station_config conf;
+
+    wifi_station_get_config(&conf);
+    for (uint8_t i = 0; i < sizeof(conf.bssid); i++)
+        bssid[i] = conf.bssid[i];
+
+    chan    = wifi_get_channel();
+    ip_addr = WiFi.localIP();
+    gateway = WiFi.gatewayIP();
+    netmask = WiFi.subnetMask();
+    namesrv = WiFi.dnsIP();
+
+    save();
+}
 
 void FirmwareControl::set_clock() {
     char buffer[64];
@@ -190,8 +243,9 @@ void FirmwareControl::publish_sensor_data() {
 
 void FirmwareControl::go_online() {
     bool error = false;
-
+    int8_t status;
     uint32_t tmp = 0;
+
     ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
 
     if (!rf_enabled)
@@ -205,13 +259,28 @@ void FirmwareControl::go_online() {
         error = true;
     }
 
-    if (!error && !WiFi.begin(wifi_ssid, wifi_pass)) {
+    this->netcfg = NetCfg(true);
+    if (!error && this->netcfg.valid()) {
+        Serial.println("... found valid network config");
+        Serial.flush();
+        if (!WiFi.config(netcfg.IP(), netcfg.GW(), netcfg.Netmask(), netcfg.DNS())) {
+            error = true;
+            Serial.println("Cannot config!");
+            Serial.flush();
+        }
+
+        if (!error && !WiFi.begin(wifi_ssid, wifi_pass, netcfg.channel(), netcfg.BSSID())) {
+            Serial.println("Cannot begin from config!");
+            Serial.flush();
+            error = true;
+        }
+    } else if (!error && !WiFi.begin(wifi_ssid, wifi_pass)) {
         Serial.println("Cannot begin!");
         Serial.flush();
         error = true;
     }
 
-    int8_t status = WiFi.waitForConnectResult(10000);
+    status = WiFi.waitForConnectResult(10000);
     if (!error && status != WL_CONNECTED) {
         Serial.printf("Cannot connect (%d)!", status);
         Serial.flush();
@@ -227,14 +296,17 @@ void FirmwareControl::go_online() {
     this->online = !error;
 
     if (!online) {
+        netcfg.clear();
+        Serial.println(F("Failed to go online"));
 sleep:
         tmp = 1;
         ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
-        Serial.println(F("Failed to go online"));
         Serial.flush();
         ESP.deepSleepInstant(1E6, WAKE_RF_DEFAULT);
         delay(100);
     }
+
+    netcfg.update();
 
     set_clock();
 }
@@ -247,8 +319,10 @@ void FirmwareControl::deep_sleep() {
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
                            sizeof(reboot_count));
 
+#if 0
     if (online)
         WiFi.mode(WIFI_SHUTDOWN);
+#endif
 
     ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
 
