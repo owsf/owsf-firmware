@@ -69,6 +69,7 @@ private:
     bool online;
     uint32_t reboot_count;
     uint32_t ota_check_after;
+    uint32_t forced_data_after;
 
     WiFiClient *wifi_client;
     BearSSL::X509List *_cert = nullptr;
