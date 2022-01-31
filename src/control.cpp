@@ -375,6 +375,7 @@ void FirmwareControl::read_config() {
 
         sleep_time_s = doc["sleep_time_s"] | 60;
         ota_check_after = doc["ota_check_after"] | 10000;
+        forced_data_after = doc["forced_data_after"] | 0;
         device_name = doc["device_name"] | chip_id;
         config_version = doc["config_version"] | 0;
 
@@ -399,24 +400,27 @@ void FirmwareControl::setup() {
     read_global_config();
     read_config();
 
-    if (ESP.getResetReason() == F("Power On")) {
-        Serial.println(F("OTA Request: Power On"));
+    if (ESP.getResetReason() == F("Power On") || ESP.getResetReason() == F("External System")) {
+        Serial.print(F("OTA Request: "));
+        Serial.println(ESP.getResetReason());
         ota_request = true;
         reboot_count = 0;
+        ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER,
+                               &reboot_count,
+                               sizeof(reboot_count));
     }
 
-    if (ESP.getResetReason() == F("External System")) {
-        Serial.println(F("OTA Request: External System reset"));
-        ota_request = true;
-        reboot_count = 0;
-    }
-
-    ESP.rtcUserMemoryRead(RTCMEM_REBOOT_COUNTER, &reboot_count,
+    ESP.rtcUserMemoryRead(RTCMEM_REBOOT_COUNTER,
+                          &reboot_count,
                           sizeof(reboot_count));
-    if (reboot_count > ota_check_after) {
+    if (!(reboot_count % ota_check_after)) {
         Serial.println(F("OTA Request: Reboot counter"));
         ota_request = true;
-        reboot_count = 0;
+    }
+
+    if (forced_data_after && !(reboot_count % forced_data_after)) {
+        Serial.println(F("GoOnline Request: Reboot counter"));
+        go_online_request = true;
     }
 
     uint32_t tmp;
@@ -442,8 +446,6 @@ void FirmwareControl::loop() {
 
     if (online && ota_request) {
         ota_effect = OTA();
-        ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
-                               sizeof(reboot_count));
         if (ota_effect)
             ESP.reset();
 
