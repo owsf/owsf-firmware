@@ -35,7 +35,7 @@ int Updater::update(HTTPClient &http, String &update_url, const char *version) {
 
     case HTTP_UPDATE_OK:
         Serial.println("HTTP_UPDATE_OK");
-        r = 0;
+        r = 1;
         break;
 
     default:
