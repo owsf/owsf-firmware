@@ -396,6 +396,9 @@ void FirmwareControl::setup() {
     Serial.println(ESP.getResetReason());
     LittleFS.begin();
 
+    read_global_config();
+    read_config();
+
     if (ESP.getResetReason() == F("Power On")) {
         Serial.println(F("OTA Request: Power On"));
         ota_request = true;
@@ -429,9 +432,6 @@ void FirmwareControl::setup() {
     Serial.println(numCerts);
     if (numCerts == 0)
         Serial.printf("No certs found\n");
-
-    read_global_config();
-    read_config();
 }
 
 void FirmwareControl::loop() {
