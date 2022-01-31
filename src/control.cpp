@@ -99,7 +99,7 @@ void FirmwareControl::set_clock() {
     Serial.println(buffer);
 }
 
-void FirmwareControl::update_config(const char *name) {
+bool FirmwareControl::update_config(const char *name) {
     Serial.print(F("Update configuration: "));
     Serial.println(name);
 
@@ -107,7 +107,7 @@ void FirmwareControl::update_config(const char *name) {
 
     String url = ctrl_url + "/" + name;
     if (!https->begin(*wifi_client, url))
-        return;
+        return false;
 
     https->setUserAgent(F("ESP8266-OTA"));
     https->addHeader(F("X-chip-id"), chip_id);
@@ -122,13 +122,13 @@ void FirmwareControl::update_config(const char *name) {
         filename = F("/config.json");
     } else {
         https->end();
-        return;
+        return false;
     }
 
     int http_code = https->GET();
     if (http_code < 0) {
         https->end();
-        return;
+        return false;
     }
 
     /* Note: we do not use streaming API here! Because we try to be a little more
@@ -144,35 +144,37 @@ void FirmwareControl::update_config(const char *name) {
         if (error != DeserializationError::Ok) {
             Serial.printf("Could not load config file");
             https->end();
-            return;
+            return false;
         }
     } else {
         Serial.print(https->getString());
         Serial.println();
         https->end();
-        return;
+        return false;
     }
     https->end();
 
     File file = LittleFS.open(filename, "w");
     if (!file)
-        return;
+        return false;
 
     file.write(payload.c_str(), payload.length());
 
     file.close();
+
+    return true;
 }
 
-void FirmwareControl::OTA() {
+bool FirmwareControl::OTA() {
     if (ctrl_url.length() < 11) {
         Serial.println(F("Invalid CTRL_URL"));
-        return;
+        return false;
     }
 
     BearSSL::WiFiClientSecure *wcs = new BearSSL::WiFiClientSecure;
     if (!wcs) {
         Serial.println(F("OOM: could not allocate WiFiClientSecure"));
-        return;
+        return false;
     }
 
     wcs->setCertStore(&cert_store);
@@ -190,7 +192,7 @@ void FirmwareControl::OTA() {
     https = new HTTPClient;
     if (!https) {
         Serial.println(F("OOM: could not allocate HTTPClient"));
-        return;
+        return false;
     }
 
     https->setReuse(true);
@@ -201,12 +203,14 @@ void FirmwareControl::OTA() {
     Serial.print(F("control server: "));
     Serial.println(ctrl_url);
 
-    update_config("global_config");
-    update_config("local_config");
+    bool new_cfg = update_config("global_config");
+    new_cfg = update_config("local_config") || new_cfg;
 
     ctrl_url += "/firmware";
     Updater upd;
-    upd.update(*https, ctrl_url, VERSION);
+    int r = upd.update(*https, ctrl_url, VERSION);
+
+    return new_cfg || r > 0 ? true : false;
 }
 
 void FirmwareControl::publish_sensor_data() {
@@ -378,6 +382,7 @@ void FirmwareControl::read_config() {
         sensor_manager = new SensorManager(ja);
     } else {
         ota_request = true;
+        Serial.println(F("OTA Request: No local config found"));
     }
 }
 
@@ -392,11 +397,13 @@ void FirmwareControl::setup() {
     LittleFS.begin();
 
     if (ESP.getResetReason() == F("Power On")) {
+        Serial.println(F("OTA Request: Power On"));
         ota_request = true;
         reboot_count = 0;
     }
 
     if (ESP.getResetReason() == F("External System")) {
+        Serial.println(F("OTA Request: External System reset"));
         ota_request = true;
         reboot_count = 0;
     }
@@ -404,6 +411,7 @@ void FirmwareControl::setup() {
     ESP.rtcUserMemoryRead(RTCMEM_REBOOT_COUNTER, &reboot_count,
                           sizeof(reboot_count));
     if (reboot_count > ota_check_after) {
+        Serial.println(F("OTA Request: Reboot counter"));
         ota_request = true;
         reboot_count = 0;
     }
@@ -427,18 +435,23 @@ void FirmwareControl::setup() {
 }
 
 void FirmwareControl::loop() {
+    bool ota_effect = false;
+
     if (!online && (go_online_request || ota_request))
         go_online();
 
     if (online && ota_request) {
-        OTA();
+        ota_effect = OTA();
         ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
                                sizeof(reboot_count));
-        ESP.reset();
-    }
+        if (ota_effect)
+            ESP.reset();
 
-    if (ota_request)
-        return;
+        /* we did try OTA but either it had no effect or did fail,
+         * either way we clear the request
+         */
+        ota_request = false;
+    }
 
     if (sensor_manager->sensors_done()) {
         go_online_request = sensor_manager->upload_requested();
