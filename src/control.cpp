@@ -318,6 +318,7 @@ sleep:
 void FirmwareControl::deep_sleep() {
     Serial.print(F(" -> deep sleep for "));
     Serial.println(sleep_time_s);
+    Serial.flush();
 
     ++reboot_count;
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
@@ -329,7 +330,6 @@ void FirmwareControl::deep_sleep() {
 #endif
 
     ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
-
     delay(100);
 }
 
