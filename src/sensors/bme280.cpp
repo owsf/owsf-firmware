@@ -22,7 +22,7 @@ Sensor_State Sensor_BME280::sample() {
 
     Wire.begin(sda, scl);
     bme.takeForcedMeasurement();
-    pres = bme.readPressure();
+    pres = bme.readPressure() / 100.;
     hum = bme.readHumidity();
     temp = bme.readTemperature();
 
@@ -49,7 +49,7 @@ void Sensor_BME280::publish(Point &p) {
 
     p.addField("temperature", temp);
     p.addField("humidity", hum);
-    p.addField("pressure", pres / 100.0);
+    p.addField("pressure", pres);
 }
 
 Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
@@ -63,9 +63,9 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
     sda = j["sda"] | 2;
     scl = j["scl"] | 14;
 
-    threshold_pres = j["threshold_pres"] | 20.0;
+    threshold_pres = j["threshold_pres"] | 5.0;
     threshold_hum = j["threshold_hum"] | 0.5;
-    threshold_temp = j["threshold_temp"] | 0.1;
+    threshold_temp = j["threshold_temp"] | 0.3;
 
     rtcmem = j["rtcmem_slot"] | -1;
     mem = RTCMEM_SENSOR(rtcmem);
