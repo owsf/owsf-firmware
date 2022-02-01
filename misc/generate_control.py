@@ -89,7 +89,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="prepare config files")
     parser.add_argument("--data-dir", type=str, default="./data")
     parser.add_argument("--output-dir", type=str, default="./server_data")
-    parser.add_argument("--mapping-file", type=str, default="misc/mapping.json")
+    parser.add_argument("--mapping-file", type=str, default="misc/my_sensors/mapping.json")
     args = parser.parse_args()
 
     global_config(args.data_dir, args.output_dir)
