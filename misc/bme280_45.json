@@ -5,7 +5,7 @@
             "scl"  : 5,
             "sda"  : 4,
             "tags" : "air",
-            "threshold_temp": 0.10,
+            "threshold_temp": 0.30,
             "threshold_hum": 1.00,
             "threshold_pres": 20.00,
             "rtcmem_slot" : 1
