@@ -78,8 +78,13 @@ private:
     SensorManager *sensor_manager = nullptr;
     InfluxDBClient *influx = nullptr;
 
+    uint32_t connect_time;
+    uint32_t sample_time;
+    bool valid_net_cfg;
+
 protected:
-    void publish_sensor_data();
+    void publish_trace_data();
+    void publish_data();
     void read_global_config();
     void read_config();
     bool OTA();

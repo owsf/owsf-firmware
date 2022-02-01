@@ -213,7 +213,18 @@ bool FirmwareControl::OTA() {
     return new_cfg || r > 0 ? true : false;
 }
 
-void FirmwareControl::publish_sensor_data() {
+void FirmwareControl::publish_trace_data() {
+    Point point("trace_data");
+    point.addTag("device", device_name);
+    point.addTag("chip_id", chip_id);
+    point.addTag("firmware_version", VERSION);
+    point.setTime(time(nullptr));
+    point.addField("connect_time", connect_time);
+    point.addField("sample_time", sample_time);
+    point.addTag("valid_net_cfg", valid_net_cfg ? "true" : "false");
+}
+
+void FirmwareControl::publish_data() {
     uint8_t num_sensors;
 
     num_sensors = sensor_manager->get_num_sensors();
@@ -236,6 +247,7 @@ void FirmwareControl::publish_sensor_data() {
     }
 
     sensor_manager->publish(influx, &device_name, chip_id, VERSION);
+    publish_trace_data();
 
     if (!influx->flushBuffer()) {
         Serial.print("InfluxDB flush failed: ");
@@ -248,7 +260,7 @@ void FirmwareControl::publish_sensor_data() {
 void FirmwareControl::go_online() {
     bool error = false;
     int8_t status;
-    uint32_t tmp = 0;
+    uint32_t tmp = 0, start_time = millis();
 
     ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
 
@@ -264,7 +276,8 @@ void FirmwareControl::go_online() {
     }
 
     this->netcfg = NetCfg(true);
-    if (!error && this->netcfg.valid()) {
+    valid_net_cfg = this->netcfg.valid();
+    if (!error && valid_net_cfg) {
         Serial.println("... found valid network config");
         Serial.flush();
         if (!WiFi.config(netcfg.IP(), netcfg.GW(), netcfg.Netmask(), netcfg.DNS())) {
@@ -311,6 +324,7 @@ sleep:
     }
 
     netcfg.update();
+    connect_time = millis() - start_time;
 
     set_clock();
 }
@@ -440,6 +454,7 @@ void FirmwareControl::setup() {
 
 void FirmwareControl::loop() {
     bool ota_effect = false;
+    uint32_t start_time;
 
     if (!online && (go_online_request || ota_request))
         go_online();
@@ -459,13 +474,15 @@ void FirmwareControl::loop() {
         go_online_request = sensor_manager->upload_requested();
 
         if (online) {
-            publish_sensor_data();
+            publish_data();
             deep_sleep();
         } else if (!go_online_request) {
             deep_sleep();
         }
     } else {
+        start_time = millis();
         sensor_manager->loop();
+        sample_time += millis() - start_time;
     }
 }
 
@@ -480,6 +497,9 @@ FirmwareControl::FirmwareControl() :
     rf_enabled(false),
     online(false),
     sensor_manager(nullptr),
-    influx(nullptr)
+    influx(nullptr),
+    connect_time(0),
+    sample_time(0),
+    valid_net_cfg(false)
 {
 }
