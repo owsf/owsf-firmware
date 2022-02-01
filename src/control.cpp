@@ -222,6 +222,8 @@ void FirmwareControl::publish_trace_data() {
     point.addField("connect_time", connect_time);
     point.addField("sample_time", sample_time);
     point.addTag("valid_net_cfg", valid_net_cfg ? "true" : "false");
+    Serial.println(influx->pointToLineProtocol(point));
+    influx->writePoint(point);
 }
 
 void FirmwareControl::publish_data() {
