@@ -79,7 +79,9 @@ void NetCfg::update() {
 void FirmwareControl::set_clock() {
     char buffer[64];
 
-    configTzTime(TZ_Europe_Berlin, "pool.ntp.org", "time.nist.gov");
+    Serial.print(F("NTP Server: "));
+    Serial.println(ntp_server);
+    configTzTime(TZ_Europe_Berlin, ntp_server);
 
     Serial.print(F("Waiting for NTP time sync: "));
     time_t now = time(nullptr);
@@ -377,6 +379,8 @@ void FirmwareControl::read_global_config() {
     influx_token = strdup(doc["influx_token"] | "ABCDEFG");
     influx_bucket = strdup(doc["influx_bucket"] | "sensor_bucket");
     influx_org = strdup(doc["influx_org"] | "influx org");
+
+    ntp_server = strdup(doc["ntp_server"] | "pool.ntp.org");
 }
 
 void FirmwareControl::read_config() {

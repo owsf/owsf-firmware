@@ -48,6 +48,7 @@ private:
     String global_config_key;
     uint32_t global_config_version;
 
+    const char *ntp_server = "de.pool.ntp.org";
     const char *influx_url = nullptr;
     const char *influx_org = nullptr;
     const char *influx_bucket = nullptr;
