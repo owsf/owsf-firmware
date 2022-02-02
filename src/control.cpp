@@ -262,6 +262,7 @@ void FirmwareControl::go_online() {
     bool error = false;
     int8_t status;
     uint32_t tmp = 0, start_time = millis();
+    uint32_t sleep_factor = 1;
 
     ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
 
@@ -316,11 +317,12 @@ void FirmwareControl::go_online() {
     if (!online) {
         netcfg.clear();
         Serial.println(F("Failed to go online"));
+        sleep_factor = 30;
 sleep:
         tmp = 1;
         ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
         Serial.flush();
-        ESP.deepSleepInstant(1E6, WAKE_RF_DEFAULT);
+        ESP.deepSleepInstant(sleep_factor * 1E6, WAKE_RF_DEFAULT);
         delay(100);
     }
 
