@@ -66,7 +66,6 @@ private:
 
     bool go_online_request;
     bool ota_request;
-    bool rf_enabled;
     bool online;
     uint32_t reboot_count;
     uint32_t ota_check_after;

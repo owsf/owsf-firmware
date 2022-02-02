@@ -497,7 +497,6 @@ FirmwareControl::FirmwareControl() :
     sleep_time_s(600),
     go_online_request(false),
     ota_request(false),
-    rf_enabled(false),
     online(false),
     sensor_manager(nullptr),
     influx(nullptr),
