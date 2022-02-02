@@ -64,6 +64,7 @@ private:
 
     BearSSL::CertStore cert_store;
 
+    bool rf_active;
     bool go_online_request;
     bool ota_request;
     bool online;
