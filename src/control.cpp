@@ -383,8 +383,10 @@ void FirmwareControl::read_global_config() {
 
 void FirmwareControl::read_config() {
     File file = LittleFS.open("/config.json", "r");
+    StaticJsonDocument<1024> doc;
+    JsonArray ja;
+
     if (file) {
-        StaticJsonDocument<1024> doc;
         DeserializationError error = deserializeJson(doc, file);
         if (error != DeserializationError::Ok) {
             Serial.printf("Could not load config file");
@@ -398,11 +400,14 @@ void FirmwareControl::read_config() {
         device_name = doc["device_name"] | chip_id;
         config_version = doc["config_version"] | 0;
 
-        JsonArray ja = doc["sensors"].as<JsonArray>();
+        ja = doc["sensors"].as<JsonArray>();
         sensor_manager = new SensorManager(ja);
     } else {
         ota_request = true;
         Serial.println(F("OTA Request: No local config found"));
+        deserializeJson(doc, "{}");
+        ja = doc.as<JsonArray>();
+        sensor_manager = new SensorManager(ja);
     }
 }
 
@@ -433,12 +438,12 @@ void FirmwareControl::setup() {
                           &reboot_count,
                           sizeof(reboot_count));
     if (!(reboot_count % ota_check_after)) {
-        Serial.println(F("OTA Request: Reboot counter"));
+        Serial.println("OTA Request: Reboot counter");
         ota_request = true;
     }
 
     if (forced_data_after && !(reboot_count % forced_data_after)) {
-        Serial.println(F("GoOnline Request: Reboot counter"));
+        Serial.println("GoOnline Request: Reboot counter");
         go_online_request = true;
     }
 
@@ -447,12 +452,11 @@ void FirmwareControl::setup() {
     if (tmp != 0)
         go_online_request = true;
 
-    int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"),
-                                            PSTR("/certs.ar"));
-    Serial.print(F("Number of CA certs read: "));
-    Serial.println(numCerts);
-    if (numCerts == 0)
-        Serial.printf("No certs found\n");
+    int num_certs = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"), PSTR("/certs.ar"));
+    Serial.print("Number of CA certs read: ");
+    Serial.println(num_certs);
+    if (!num_certs)
+        Serial.println("No certs found");
 }
 
 void FirmwareControl::loop() {
@@ -494,10 +498,15 @@ FirmwareControl::FirmwareControl() :
     influx_org(nullptr),
     influx_bucket(nullptr),
     influx_token(nullptr),
+    device_name("OWSF Sensor ESP8266"),
     sleep_time_s(600),
+    config_version(0),
     go_online_request(false),
     ota_request(false),
     online(false),
+    reboot_count(0),
+    ota_check_after(10000),
+    forced_data_after(0),
     sensor_manager(nullptr),
     influx(nullptr),
     connect_time(0),
