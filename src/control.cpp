@@ -264,14 +264,16 @@ void FirmwareControl::go_online() {
     bool error = false;
     int8_t status;
     uint32_t tmp = 0, start_time = millis();
-    uint32_t sleep_factor = 1;
 
     ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
 
-    if (!rf_enabled)
-        goto sleep;
-
+    /* work around for connection problems */
+    if (WiFi.getMode() != WIFI_OFF) {
+        WiFi.persistent(true);
+        WiFi.mode(WIFI_OFF);
+    }
     WiFi.persistent(false);
+
     if (!WiFi.mode(WIFI_STA)) {
         WiFi.mode(WIFI_OFF);
         Serial.println("Cannot WIFI_STA!");
@@ -319,17 +321,15 @@ void FirmwareControl::go_online() {
     if (!online) {
         netcfg.clear();
         Serial.println(F("Failed to go online"));
-        sleep_factor = 30;
-sleep:
         tmp = 1;
         ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
         Serial.flush();
-        ESP.deepSleepInstant(sleep_factor * 1E6, WAKE_RF_DEFAULT);
+        ESP.deepSleepInstant(60 * 1E6, WAKE_RF_DEFAULT);
         delay(100);
     }
 
-    netcfg.update();
     connect_time = millis() - start_time;
+    netcfg.update();
 
     set_clock();
 }
@@ -343,10 +343,8 @@ void FirmwareControl::deep_sleep() {
     ESP.rtcUserMemoryWrite(RTCMEM_REBOOT_COUNTER, &reboot_count,
                            sizeof(reboot_count));
 
-#if 0
     if (online)
-        WiFi.mode(WIFI_SHUTDOWN);
-#endif
+        WiFi.mode(WIFI_OFF);
 
     ESP.deepSleepInstant(sleep_time_s * 1E6, WAKE_RF_DISABLED);
     delay(100);
@@ -446,10 +444,8 @@ void FirmwareControl::setup() {
 
     uint32_t tmp;
     ESP.rtcUserMemoryRead(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
-    if (tmp != 0) {
+    if (tmp != 0)
         go_online_request = true;
-        rf_enabled = true;
-    }
 
     int numCerts = cert_store.initCertStore(LittleFS, PSTR("/certs.idx"),
                                             PSTR("/certs.ar"));
