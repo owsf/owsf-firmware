@@ -13,6 +13,7 @@
 #include <FS.h>
 #include <IPAddress.h>
 #include <LittleFS.h>
+#include <TZ.h>
 #include <time.h>
 
 #include "control.h"
@@ -21,8 +22,6 @@
 #include "version.h"
 
 #include "influxca.h"
-
-#define TZ_INFO "CET-1CEST,M3.5.0,M10.5.0/3"
 
 
 NetCfg::NetCfg(bool load) {
@@ -80,7 +79,7 @@ void NetCfg::update() {
 void FirmwareControl::set_clock() {
     char buffer[64];
 
-    configTzTime(TZ_INFO, "pool.ntp.org", "time.nist.gov");
+    configTzTime(TZ_Europe_Berlin, "pool.ntp.org", "time.nist.gov");
 
     Serial.print(F("Waiting for NTP time sync: "));
     time_t now = time(nullptr);
