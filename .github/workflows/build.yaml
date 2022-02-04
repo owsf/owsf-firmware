@@ -46,6 +46,25 @@ jobs:
 
     # TODO: Add some firmware testing here...
 
+    - name: prepare firmware
+      run: |
+        FW_PATH=$(find . -name firmware\*.sig)
+        FW_NAME=$(basename $FW_PATH)
+        FW_VERSION=$(echo $FW_NAME | sed -E 's#firmware\.(v.*)\.sig#\1#g')
+
+        FW_OUTPUT=$(pwd)/output
+        echo "::set-output name=path::$FW_OUTPUT"
+        mkdir -p $FW_OUTPUT
+        cp $FW_PATH $FW_OUTPUT
+        echo "{\"file\":\"$FW_NAME\",\"version\":\"$FW_VERSION\"}" | jq . > $FW_OUTPUT/firmware.json
+      id: prepare_firmware
+
+    - name: upload firmware to artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: ${{ steps.prepare_firmware.outputs.path }}/
+
   create_release:
     needs: test
     runs-on: ubuntu-20.04
