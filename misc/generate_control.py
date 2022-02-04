@@ -94,4 +94,4 @@ if __name__ == "__main__":
 
     global_config(args.data_dir, args.output_dir)
     local_config(args.mapping_file, args.output_dir)
-    firmware(os.path.join(os.path.dirname(sys.argv[0]), ".."), args.output_dir)
+    #firmware(os.path.join(os.path.dirname(sys.argv[0]), ".."), args.output_dir)
