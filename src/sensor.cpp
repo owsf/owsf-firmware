@@ -14,6 +14,7 @@
 #include "sensors/adc.h"
 #include "sensors/bme280.h"
 #include "sensors/ds18b20.h"
+#include "sensors/vindriktning.h"
 
 bool threshold_helper_float(float val_new, float *val_old, float threshold)
 {
@@ -70,12 +71,14 @@ void SensorManager::new_sensor(JsonVariant &j) {
 ADCFactory adc_factory;
 BME280Factory bme280_factory;
 DS18B20Factory ds18b20_factory;
+VINDRIKTNINGFactory vindriktning_factory;
 
 SensorManager::SensorManager(const JsonArray &j) {
     num_sensors = 0;
     bme280_factory.register_factory(this);
     adc_factory.register_factory(this);
     ds18b20_factory.register_factory(this);
+    vindriktning_factory.register_factory(this);
 
     for (JsonVariant v : j) {
         Serial.printf("found sensor type %s\n", v["type"].as<const char *>());
