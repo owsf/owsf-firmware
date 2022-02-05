@@ -20,6 +20,9 @@ Sensor_State Sensor_BME280::sample() {
         return SENSOR_NOT_INIT;
     }
 
+    if (data_upload)
+	return SENSOR_DONE_UPDATE;
+
     Wire.begin(sda, scl);
     bme.takeForcedMeasurement();
     pres = bme.readPressure() / 100.;
@@ -38,6 +41,11 @@ Sensor_State Sensor_BME280::sample() {
         state = SENSOR_DONE_UPDATE;
     if (threshold_helper_float(temp, &rtc_data.temp, threshold_temp))
         state = SENSOR_DONE_UPDATE;
+    if (state == SENSOR_DONE_UPDATE) {
+	rtc_data.data_upload = 0xdeadbeef;
+    } else {
+	rtc_data.data_upload = 0;
+    }
     ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
 
     return state;
@@ -47,13 +55,16 @@ void Sensor_BME280::publish(Point &p) {
     if (!initialized)
         return;
 
-    p.addField("temperature", temp);
-    p.addField("humidity", hum);
-    p.addField("pressure", pres);
+    ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+    rtc_data.data_upload = 0;
+    ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+    p.addField("temperature", rtc_data.temp);
+    p.addField("humidity", rtc_data.hum);
+    p.addField("pressure", rtc_data.pres);
 }
 
 Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
-    temp(21.), hum(50.), pres(1080.), bme(), mem(-1)
+    temp(21.), hum(50.), pres(1080.), bme(), mem(-1), data_upload(false)
 {
     int rtcmem;
 
@@ -72,6 +83,14 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
 
     tags = j["tags"] | "";
 
+    ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+    if (rtc_data.data_upload == 0xdeadbeef) {
+	rtc_data.data_upload = 0;
+	ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+	data_upload = true;
+	initialized = true;
+	return;
+    }
     Wire.begin(sda, scl);
     if (!bme.begin(addr, &Wire))
         return;

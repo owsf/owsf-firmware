@@ -15,6 +15,7 @@
 #include "sensor.h"
 
 struct bme280_rtc_data {
+    uint32_t data_upload;
     float temp;
     float hum;
     float pres;
@@ -35,6 +36,7 @@ private:
     bme280_rtc_data rtc_data;
     static constexpr const char *sensor_type = "BME280";
     String tags;
+    bool data_upload;
     Sensor_State state = SENSOR_NOT_INIT;
 
 public:
@@ -46,7 +48,7 @@ public:
 
     explicit Sensor_BME280(const JsonVariant &);
     Sensor_BME280() : sda(2), scl(14), temp(21.), hum(50.), pres(1080.),
-    initialized(false), bme(), mem(-1), tags() {}
+    initialized(false), bme(), mem(-1), tags(), data_upload(false) {}
     ~Sensor_BME280() {}
 };
 
