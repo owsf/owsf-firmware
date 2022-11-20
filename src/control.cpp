@@ -239,7 +239,7 @@ void FirmwareControl::publish_data() {
     influx->setHTTPOptions(opt);
     // NOTE: check batchSize with respect to num_sensors if there are memory
     // consumption errors upcomming
-    influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S).batchSize(num_sensors).bufferSize(2*num_sensors));
+    influx->setWriteOptions(WriteOptions().writePrecision(WritePrecision::S).batchSize(num_sensors).bufferSize(2*num_sensors).maxRetryInterval(10));
 
     if (influx->validateConnection()) {
         Serial.print("Connected to InfluxDB: ");
@@ -252,11 +252,15 @@ void FirmwareControl::publish_data() {
     sensor_manager->publish(influx, &device_name, chip_id, VERSION);
     publish_trace_data();
 
-    if (!influx->flushBuffer()) {
+    influx_retry = 0;
+    while (!influx->isBufferEmpty() && influx_retry < 30) {
+        influx->flushBuffer();
         Serial.print("InfluxDB flush failed: ");
         Serial.println(influx->getLastErrorMessage());
         Serial.print("Full buffer: ");
         Serial.println(influx->isBufferFull() ? "Yes" : "No");
+        influx_retry++;
+        delay(1000);
     }
 }
 
@@ -500,6 +504,7 @@ FirmwareControl::FirmwareControl() :
     influx_org(nullptr),
     influx_bucket(nullptr),
     influx_token(nullptr),
+    influx_retry(0),
     device_name("OWSF Sensor ESP8266"),
     sleep_time_s(600),
     config_version(0),

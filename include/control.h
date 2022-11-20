@@ -53,6 +53,7 @@ private:
     const char *influx_org = nullptr;
     const char *influx_bucket = nullptr;
     const char *influx_token = nullptr;
+    uint32_t   influx_retry = 0;
 
     String device_name;
 
