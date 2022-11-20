@@ -269,13 +269,14 @@ void FirmwareControl::go_online() {
     int8_t status;
     uint32_t tmp = 0, start_time = millis();
     uint32_t sleep_factor = 1;
-    
+
     ESP.rtcUserMemoryWrite(RTCMEM_GO_ONLINE, &tmp, sizeof(tmp));
 
     if (!rf_active)
         goto sleep;
 
     WiFi.persistent(false);
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
     if (!WiFi.mode(WIFI_STA)) {
         WiFi.mode(WIFI_OFF);
         Serial.println("Cannot WIFI_STA!");
