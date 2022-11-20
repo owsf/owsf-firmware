@@ -62,10 +62,14 @@ def firmware(src_dir, output_dir):
                            shell=False).strip().decode()
 
     m = re.match(r"(.*?)(-g[0-9a-f]{7})?(-dirty)?$", version)
-
-    filename = "firmware.sig.%s" % (version)
     if m and len(m.groups("")[2]) == 0:
-       filename = "firmware.sig.%s" % m.groups()[0].replace("-", ".")
+        version = m.groups()[0].replace("-", ".")
+    else:
+        version = m.groups()[0].replace("-", ".") + "-dirty"
+
+    filename = "firmware.%s.sig" % (version)
+    if m and len(m.groups("")[2]) == 0:
+       filename = "firmware.%s.sig" % m.groups()[0].replace("-", ".")
 
     fwjs = {
         "version" : version if not m else m.groups()[0].replace("-","."),
