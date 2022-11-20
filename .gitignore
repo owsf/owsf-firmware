@@ -40,9 +40,7 @@
 # temporary files
 *.swp
 
-data/certs.ar
-data/config.json
-data/global_config.json
+data/
 
 # ignore generated files
 include/version.h
