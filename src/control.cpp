@@ -417,6 +417,7 @@ void FirmwareControl::read_config() {
 }
 
 void FirmwareControl::setup() {
+    force_update = false;
     snprintf(chip_id, 11, "0x%08x", ESP.getChipId());
 
     Serial.printf("ESP8266 Firmware Version %s (%s)\n", VERSION, BUILD_DATE);
@@ -447,9 +448,11 @@ void FirmwareControl::setup() {
         ota_request = true;
     }
 
+    Serial.printf("Reset Counter: %d, Forced Counter %d\n", reboot_count, forced_data_after);
     if (forced_data_after && !(reboot_count % forced_data_after)) {
         Serial.println("GoOnline Request: Reboot counter");
         go_online_request = true;
+	force_update = true;
     }
 
     uint32_t tmp;
@@ -469,6 +472,7 @@ void FirmwareControl::setup() {
 void FirmwareControl::loop() {
     bool ota_effect = false;
     uint32_t start_time;
+    bool ret;
 
     if (!online && (go_online_request || ota_request))
         go_online();
@@ -484,7 +488,12 @@ void FirmwareControl::loop() {
         ota_request = false;
     }
 
-    if (sensor_manager->sensors_done()) {
+    if (force_update)
+	ret = true;
+    else
+	ret = sensor_manager->sensors_done();
+
+    if (ret) {
         go_online_request = sensor_manager->upload_requested();
 
         if (online) {
