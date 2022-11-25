@@ -24,7 +24,8 @@ Sensor_ADC::Sensor_ADC(const JsonVariant &j) : current_value(0) {
 }
 
 void Sensor_ADC::publish(Point &p) {
-    p.addField("voltage", current_value);
+    ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+    p.addField("voltage", rtc_data.current_value);
 }
 
 Sensor_State Sensor_ADC::sample() {
