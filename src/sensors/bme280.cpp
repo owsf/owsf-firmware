@@ -16,7 +16,7 @@ Sensor_State Sensor_BME280::sample() {
 
     Serial.printf("  Sampling sensor BME280\n");
     if (!initialized) {
-        Serial.printf("  BME280 not initialized");
+        Serial.printf("  BME280 not initialized\n");
         return SENSOR_NOT_INIT;
     }
 
@@ -92,14 +92,17 @@ Sensor_BME280::Sensor_BME280(const JsonVariant &j) :
 	return;
     }
     Wire.begin(sda, scl);
+    delay(500);
     if (!bme.begin(addr, &Wire))
         return;
 
+    delay(500);
     bme.setSampling(Adafruit_BME280::MODE_FORCED,
                     Adafruit_BME280::SAMPLING_X1, // temperature
                     Adafruit_BME280::SAMPLING_X1, // pressure
                     Adafruit_BME280::SAMPLING_X1, // humidity
                     Adafruit_BME280::FILTER_OFF);
+    delay(500);
 
     initialized = true;
 }
