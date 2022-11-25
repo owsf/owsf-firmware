@@ -50,6 +50,7 @@ def local_config(mapping_file, output_dir):
             "config_version" : j[chip]["config_version"],
             "device_name" : j[chip]["device_name"],
             "sleep_time_s" : j[chip]["sleep_time_s"],
+            "forced_data_after" : j[chip]["forced_data_after"],
             "sensors" : sensors["sensors"],
         }
         with open(os.path.join(output_dir, "config.json.%s" % (chip)), "w") as f:
