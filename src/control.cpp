@@ -255,7 +255,7 @@ void FirmwareControl::publish_data() {
     publish_trace_data();
 
     influx_retry = 0;
-    while (!influx->isBufferEmpty() && influx_retry < 30) {
+    while (!influx->isBufferEmpty() && influx_retry < 10) {
         influx->flushBuffer();
         Serial.print("InfluxDB flush failed: ");
         Serial.println(influx->getLastErrorMessage());
