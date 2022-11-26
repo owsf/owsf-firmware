@@ -31,16 +31,18 @@ private:
 	static constexpr const char *sensor_type = "VINDRIKTNING";
 	String tags;
 	Sensor_State state = SENSOR_NOT_INIT;
-	uint8_t rx_buf[255];
-	uint8_t rx_buf_idx;
+
 	uint16_t pm25_meas[5];
 	uint8_t pm25_meas_idx;
 	bool data_upload;
+	std::vector<uint8_t> vind_message;
+	uint32_t incoming_mask = 0;
+	bool record = false;
+	bool finished = false;
 
-	void rx_buf_clear();
 	bool sample_process();
-	bool header_valid();
 	bool checksum_valid();
+	char check_start_end_bytes(uint8_t);
 
 public:
 	Sensor_State sample() override;
@@ -52,7 +54,7 @@ public:
 	explicit Sensor_VINDRIKTNING(const JsonVariant &);
 	Sensor_VINDRIKTNING() : rx(4), tx(5), pm25(1.0),
 	initialized(false), sensor_serial(), mem(-1), tags(),
-	rx_buf_idx(0), pm25_meas_idx(0), data_upload(false) {}
+	pm25_meas_idx(0), data_upload(false) {}
 	~Sensor_VINDRIKTNING() {}
 };
 
