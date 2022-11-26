@@ -9,12 +9,9 @@
 #include <SoftwareSerial.h>
 
 #include "sensors/vindriktning.h"
-
-void Sensor_VINDRIKTNING::rx_buf_clear() {
-	// Clear everything for the next message
-	memset(rx_buf, 0, sizeof(rx_buf));
-	rx_buf_idx = 0;
-}
+const char START_BYTES_DETECTED = 1;
+const char END_BYTES_DETECTED = 2;
+const uint32_t START_MASK = 0x0016110B;
 
 bool Sensor_VINDRIKTNING::sample_process() {
 	/**
@@ -25,7 +22,7 @@ bool Sensor_VINDRIKTNING::sample_process() {
 	uint16_t pm25_cur;
 	float pm25_calc;
 
-	pm25_cur = (rx_buf[5] << 8) | rx_buf[6];
+	pm25_cur = (vind_message[5] << 8) | vind_message[6];
 	pm25_meas[pm25_meas_idx] = pm25_cur;
 	pm25_meas_idx = (pm25_meas_idx + 1) % 5;
 
@@ -38,21 +35,25 @@ bool Sensor_VINDRIKTNING::sample_process() {
 		done = true;
 	}
 
-	rx_buf_clear();
+	vind_message.clear();
 	return done;
 }
 
-bool Sensor_VINDRIKTNING::header_valid() {
-	bool headerValid = rx_buf[0] == 0x16 && rx_buf[1] == 0x11 && rx_buf[2] == 0x0B;
+char Sensor_VINDRIKTNING::check_start_end_bytes(uint8_t byte) {
+  incoming_mask = (incoming_mask << 8) | byte;
 
-	return headerValid;
+  if ((incoming_mask & START_MASK) == START_MASK)
+    return START_BYTES_DETECTED;
+  if (record && vind_message.size() > 19)
+    return END_BYTES_DETECTED;
+  return 0;
 }
 
 bool Sensor_VINDRIKTNING::checksum_valid() {
 	uint8_t checksum = 0;
 
 	for (uint8_t i = 0; i < 20; i++) {
-		checksum += rx_buf[i];
+		checksum += vind_message[i];
 	}
 
 	return checksum == 0;
@@ -75,24 +76,46 @@ Sensor_State Sensor_VINDRIKTNING::sample() {
 		return state;
 	}
 
-	Serial.printf("Sampling vindriktning data: ");
 	while (sensor_serial->available()) {
-		rx_buf[rx_buf_idx++] = sensor_serial->read();
-		Serial.printf(".");
+		const char c = sensor_serial->read();
 
-		delay(15);
-		if (rx_buf_idx >= 64) {
-			rx_buf_clear();
-		}
+		delay(1);
+		if (record)
+			vind_message.emplace_back(c);
+
+		switch (check_start_end_bytes(c)) {
+		case START_BYTES_DETECTED: {
+			Serial.printf("vindriktning: start detected\n");
+			record = true;
+			vind_message.clear();
+			vind_message.emplace_back(0x16);
+			vind_message.emplace_back(0x11);
+			vind_message.emplace_back(0x0B);
+			break;
+		};
+		case END_BYTES_DETECTED: {
+			if (record) {
+				record = false;
+				finished = true;
+				Serial.printf("vindriktning: end detected\n");
+			}
+			break;
+		};
+		};
 	}
-	Serial.printf("\n");
 
-	if (header_valid() && checksum_valid()) {
-		Serial.printf("Found vindriktning data\n");
-		if (!sample_process())
-			return state;
-	} else {
-		rx_buf_clear();
+	if (finished == false)
+		return state;
+	finished = false;
+
+	Serial.printf("vindriktning: checking checksum\n");
+	if (!checksum_valid()) {
+		Serial.printf("vindriktning: checksum incorrect\n");
+		vind_message.clear();
+		return state;
+	}
+
+	if (!sample_process()) {
 		return state;
 	}
 
@@ -153,7 +176,6 @@ Sensor_VINDRIKTNING::Sensor_VINDRIKTNING(const JsonVariant &j) :
 		return;
 	}
 
-	rx_buf_idx = 0;
 	pm25_meas_idx = 0;
 
 	sensor_serial = std::make_shared<SoftwareSerial>(rx, tx);
