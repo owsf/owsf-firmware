@@ -494,7 +494,7 @@ void FirmwareControl::loop() {
 	ret = sensor_manager->sensors_done();
 
     if (ret) {
-        go_online_request = sensor_manager->upload_requested();
+        go_online_request = sensor_manager->upload_requested() || force_update;
 
         if (online) {
             publish_data();
