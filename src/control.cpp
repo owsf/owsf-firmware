@@ -472,7 +472,6 @@ void FirmwareControl::setup() {
 void FirmwareControl::loop() {
     bool ota_effect = false;
     uint32_t start_time;
-    bool ret;
 
     if (!online && (go_online_request || ota_request))
         go_online();
@@ -488,12 +487,7 @@ void FirmwareControl::loop() {
         ota_request = false;
     }
 
-    if (force_update)
-	ret = true;
-    else
-	ret = sensor_manager->sensors_done();
-
-    if (ret) {
+    if (force_update || sensor_manager->sensors_done()) {
         go_online_request = sensor_manager->upload_requested() || force_update;
 
         if (online) {
