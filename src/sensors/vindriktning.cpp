@@ -126,8 +126,10 @@ Sensor_State Sensor_VINDRIKTNING::sample() {
 
 	state = SENSOR_DONE_NOUPDATE;
 	ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
-	if (threshold_helper_float(pm25, &rtc_data.pm25, threshold_pm25))
+	if (threshold_helper_float(pm25, rtc_data.pm25, threshold_pm25)) {
 		state = SENSOR_DONE_UPDATE;
+		rtc_data.pm25 = pm25;
+	}
 	if (state == SENSOR_DONE_UPDATE) {
 		rtc_data.data_upload = 0xdeadbeef;
 	} else {

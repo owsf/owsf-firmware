@@ -7,6 +7,7 @@
 
 #include <Arduino.h>
 #include <time.h>
+#include <cfloat>
 
 #include "sensor.h"
 
@@ -17,15 +18,16 @@
 #include "sensors/sml.h"
 #include "sensors/vindriktning.h"
 
-bool threshold_helper_float(float val_new, float *val_old, float threshold)
+bool threshold_helper_float(float val_new, float val_old, float threshold)
 {
     float val_diff;
 
-    val_diff = val_new - *val_old;
-    if(val_diff < 0)
+    if (isnan(val_old))
+	val_old = -FLT_MAX;
+    val_diff = val_new - val_old;
+    if (val_diff < 0)
         val_diff *= -1;
-    if(val_diff >= threshold) {
-        *val_old = val_new;
+    if (val_diff >= threshold) {
         return true;
     } else {
         return false;
