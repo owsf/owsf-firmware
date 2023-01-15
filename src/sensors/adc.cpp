@@ -71,10 +71,12 @@ Sensor_State Sensor_ADC::sample() {
 
     state = SENSOR_DONE_NOUPDATE;
     ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
-    if (threshold_helper_float(current_value, &rtc_data.current_value, threshold_voltage))
+    if (threshold_helper_float(current_value, rtc_data.current_value,
+			       threshold_voltage)) {
         state = SENSOR_DONE_UPDATE;
-    if (state == SENSOR_DONE_UPDATE) {
-	    rtc_data.data_upload = 0xdeadbeef;
+	rtc_data.data_upload = 0xdeadbeef;
+	data_upload = true;
+	rtc_data.current_value = current_value;
     } else {
 	    rtc_data.data_upload = 0;
     }

@@ -72,5 +72,5 @@ public:
     ~SensorFactory() {};
 };
 
-bool threshold_helper_float(float, float *, float);
+bool threshold_helper_float(float, float, float);
 #endif
