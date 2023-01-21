@@ -6,6 +6,9 @@
  */
 
 #include "sensors/adc.h"
+extern "C" {
+    #include "user_interface.h"
+}
 
 Sensor_ADC::Sensor_ADC(const JsonVariant &j) : current_value(0), mem(-1),
 	data_upload(false) {
@@ -41,6 +44,7 @@ void Sensor_ADC::publish(Point &p) {
 }
 
 Sensor_State Sensor_ADC::sample() {
+    uint32_t adc_val;
     if (state != SENSOR_INIT)
         return state;
     state = SENSOR_DONE_NOUPDATE;
@@ -50,7 +54,15 @@ Sensor_State Sensor_ADC::sample() {
 
     Serial.printf("  Sampling sensor ADC\n");
 
-    current_value = factor * (1. * analogRead(0)) * (1 + r1 / r2) / 1024 + offset;
+    system_soft_wdt_stop();
+    ets_intr_lock();
+    noInterrupts();
+    adc_val = system_adc_read();
+    interrupts();
+    ets_intr_unlock();
+    system_soft_wdt_restart();
+
+    current_value = factor * (1. * adc_val) * (1 + r1 / r2) / 1024 + offset;
 
     if (mem < 0) {
         state = SENSOR_DONE_UPDATE;
