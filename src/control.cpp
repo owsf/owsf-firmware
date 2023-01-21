@@ -221,6 +221,8 @@ void FirmwareControl::publish_trace_data() {
     point.addTag("firmware_version", VERSION);
     point.setTime(time(nullptr));
     point.addField("connect_time", connect_time);
+    ESP.rtcUserMemoryRead(RTCMEM_SAMPLE_TIME, &sample_time,
+			  sizeof(sample_time));
     point.addField("sample_time", sample_time);
     point.addTag("valid_net_cfg", valid_net_cfg ? "true" : "false");
     Serial.println(influx->pointToLineProtocol(point));
@@ -495,7 +497,10 @@ void FirmwareControl::loop() {
             deep_sleep();
         } else if (!go_online_request) {
             deep_sleep();
-        }
+        } else {
+            ESP.rtcUserMemoryWrite(RTCMEM_SAMPLE_TIME, &sample_time,
+                                   sizeof(sample_time));
+	}
     } else {
         start_time = millis();
         sensor_manager->loop();
