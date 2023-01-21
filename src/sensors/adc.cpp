@@ -7,7 +7,8 @@
 
 #include "sensors/adc.h"
 
-Sensor_ADC::Sensor_ADC(const JsonVariant &j) : current_value(0) {
+Sensor_ADC::Sensor_ADC(const JsonVariant &j) : current_value(0), mem(-1),
+	data_upload(false) {
     int rtcmem;
 
     r1 = j["R1"] | 9100.;
@@ -21,16 +22,31 @@ Sensor_ADC::Sensor_ADC(const JsonVariant &j) : current_value(0) {
     mem = RTCMEM_SENSOR(rtcmem);
 
     tags = j["tags"] | "";
+
+    ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+    if (rtc_data.data_upload == 0xdeadbeef) {
+        rtc_data.data_upload = 0;
+	ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data,
+			       sizeof(rtc_data));
+        data_upload = true;
+        return;
+    }
 }
 
 void Sensor_ADC::publish(Point &p) {
-    p.addField("voltage", current_value);
+    ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+    rtc_data.data_upload = 0;
+    ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
+    p.addField("voltage", rtc_data.current_value);
 }
 
 Sensor_State Sensor_ADC::sample() {
     if (state != SENSOR_INIT)
         return state;
     state = SENSOR_DONE_NOUPDATE;
+
+    if (data_upload)
+	return SENSOR_DONE_UPDATE;
 
     Serial.printf("  Sampling sensor ADC\n");
 
@@ -41,9 +57,15 @@ Sensor_State Sensor_ADC::sample() {
         return state;
     }
 
+    state = SENSOR_DONE_NOUPDATE;
     ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
     if (threshold_helper_float(current_value, &rtc_data.current_value, threshold_voltage))
         state = SENSOR_DONE_UPDATE;
+    if (state == SENSOR_DONE_UPDATE) {
+	    rtc_data.data_upload = 0xdeadbeef;
+    } else {
+	    rtc_data.data_upload = 0;
+    }
     ESP.rtcUserMemoryWrite(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
 
     return state;

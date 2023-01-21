@@ -11,6 +11,7 @@
 #include "sensor.h"
 
 struct adc_rtc_data {
+    uint32_t data_upload;
     float current_value;
 }__attribute__ ((packed));
 
@@ -23,7 +24,8 @@ private:
    float factor;
    float threshold_voltage;
    int mem;
-   struct adc_rtc_data rtc_data;
+   bool data_upload;
+   adc_rtc_data rtc_data;
    static constexpr const char *sensor_type = "ADC";
    String tags;
    Sensor_State state = SENSOR_INIT;
@@ -37,7 +39,7 @@ public:
 
     explicit Sensor_ADC(const JsonVariant &);
 
-    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1), tags() {}
+    Sensor_ADC() : current_value(0), r1(9100.), r2(47000.), offset(0.), factor(1.), mem(-1), data_upload(false), tags() {}
     ~Sensor_ADC() {}
 };
 
