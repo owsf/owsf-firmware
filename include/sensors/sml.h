@@ -18,7 +18,7 @@ struct sml_rtc_data {
 	float energy_total_positive;
 	float energy_total_negative;
 	float power_current;
-}__attribute__ ((packed));
+}__attribute__ ((aligned(4)));
 
 class Sensor_SML : public Sensor {
 private:

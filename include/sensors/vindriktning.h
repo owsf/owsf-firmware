@@ -17,7 +17,7 @@
 struct vindriktning_rtc_data {
 	uint32_t data_upload;
 	float pm25;
-}__attribute__ ((packed));
+}__attribute__ ((aligned(4)));
 
 class Sensor_VINDRIKTNING : public Sensor {
 private:

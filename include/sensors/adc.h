@@ -13,7 +13,7 @@
 struct adc_rtc_data {
     uint32_t data_upload;
     float current_value;
-}__attribute__ ((packed));
+}__attribute__ ((aligned(4)));
 
 class Sensor_ADC : public Sensor {
 private:

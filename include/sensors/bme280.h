@@ -19,7 +19,7 @@ struct bme280_rtc_data {
     float temp;
     float hum;
     float pres;
-}__attribute__ ((packed));
+}__attribute__ ((aligned(4)));
 
 class Sensor_BME280 : public Sensor {
 private:
