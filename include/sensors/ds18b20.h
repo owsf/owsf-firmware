@@ -16,7 +16,7 @@
 
 struct ds18b20_rtc_data {
     float temp;
-}__attribute__ ((packed));
+}__attribute__ ((aligned(4)));
 
 class Sensor_DS18B20 : public Sensor {
 private:
