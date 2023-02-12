@@ -56,7 +56,7 @@ bool Sensor_SML::sample_process() {
 		}
 		if(obis_info.code_repr() == obis_power_current) {
 			power_current =
-				(float)((double)esphome::sml::bytes_to_uint(obis_info.value) / 1.0);
+				(float)((double)esphome::sml::bytes_to_int(obis_info.value) / 1.0);
 			done = true;
 			Serial.printf("sml: absolute active instantaneous power: %4.2f W\n", power_current);
 		}
