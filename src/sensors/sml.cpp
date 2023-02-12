@@ -56,7 +56,7 @@ bool Sensor_SML::sample_process() {
 		}
 		if(obis_info.code_repr() == obis_power_current) {
 			power_current =
-				(float)((double)esphome::sml::bytes_to_int(obis_info.value) / 1.0);
+				(float)((double)esphome::sml::bytes_to_int(obis_info.value) / divider_power);
 			done = true;
 			Serial.printf("sml: absolute active instantaneous power: %4.2f W\n", power_current);
 		}
@@ -241,6 +241,8 @@ Sensor_SML::Sensor_SML(const JsonVariant &j) :
 
 	threshold_energy = j["threshold_energy"] | 1;
 	threshold_power = j["threshold_power"] | 50.0;
+
+	divider_power = j["divider_power"] | 1.0;
 
 	rtcmem = j["rtcmem_slot"] | -1;
 	mem = RTCMEM_SENSOR(rtcmem);
