@@ -189,22 +189,22 @@ Sensor_State Sensor_SML::sample() {
 				   rtc_data.energy_total_positive,
 				   threshold_energy)) {
 		state = SENSOR_DONE_UPDATE;
-		rtc_data.energy_total_positive = energy_total_positive;
 	}
 	if (threshold_helper_float(energy_total_negative,
 				   rtc_data.energy_total_negative,
 				   threshold_energy)) {
 		state = SENSOR_DONE_UPDATE;
-		rtc_data.energy_total_negative = energy_total_negative;
 	}
 	if (threshold_helper_float(power_current,
 				   rtc_data.power_current,
 				   threshold_power)) {
 		state = SENSOR_DONE_UPDATE;
-		rtc_data.power_current = power_current;
 	}
 
 	if (state == SENSOR_DONE_UPDATE) {
+		rtc_data.energy_total_positive = energy_total_positive;
+		rtc_data.energy_total_negative = energy_total_negative;
+		rtc_data.power_current = power_current;
 		rtc_data.data_upload = 0xdeadbeef;
 	} else {
 		rtc_data.data_upload = 0;

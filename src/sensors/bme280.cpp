@@ -37,17 +37,17 @@ Sensor_State Sensor_BME280::sample() {
     ESP.rtcUserMemoryRead(mem, (uint32_t *)&rtc_data, sizeof(rtc_data));
     if (threshold_helper_float(pres, rtc_data.pres, threshold_pres)) {
         state = SENSOR_DONE_UPDATE;
-	rtc_data.pres = pres;
     }
     if (threshold_helper_float(hum, rtc_data.hum, threshold_hum)) {
         state = SENSOR_DONE_UPDATE;
-	rtc_data.hum = hum;
     }
     if (threshold_helper_float(temp, rtc_data.temp, threshold_temp)) {
         state = SENSOR_DONE_UPDATE;
-	rtc_data.temp = temp;
     }
     if (state == SENSOR_DONE_UPDATE) {
+	rtc_data.pres = pres;
+	rtc_data.hum = hum;
+	rtc_data.temp = temp;
 	rtc_data.data_upload = 0xdeadbeef;
     } else {
 	rtc_data.data_upload = 0;
