@@ -30,6 +30,7 @@ private:
 	std::shared_ptr<SoftwareSerial> sensor_serial;
 	float threshold_energy;
 	float threshold_power;
+	float divider_power;
 	int mem;
 	sml_rtc_data rtc_data;
 	static constexpr const char *sensor_type = "SML";
